@@ -12,6 +12,7 @@ from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 import os
 import sys
+import json
 
 # Add project root to path for imports
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -294,6 +295,8 @@ class MqttThread(QThread):
                 self.client.subscribe(topic)
             self.subscribed = True
 
+    
+
     def unsubscribe_from_data_topics(self):
         if self.subscribed:
             for topic in self.data_topics:
@@ -547,6 +550,7 @@ class GameManager(QThread):
                     # Emit the start signal
                     self.start_signal.emit()
                     
+                    
                     logger.info("✅ Start signal emitted successfully!")
                     logger.info("🔄 Now subsequent 'playing' responses will be ignored")
                     
@@ -663,8 +667,19 @@ class GameManager(QThread):
                     global scored, list_players_score, list_players_id
                     individual_scores = self._prepare_individual_scores(scored, list_players_score, list_players_id)
                     
-                    # Submit scores
+                    # 🔒 SAVE PLAYER DATA TO CSV FIRST (before API submission)
+                    logger.info("💾 Saving FalconGrasp player data to CSV before API submission...")
+                    self._save_individual_players_csv(self.game_result_id, individual_scores, None)  # None = pre-submission
+                    self._save_pre_submission_log(self.game_result_id, individual_scores)
+                    logger.info("✅ FalconGrasp player data saved locally before submission")
+                    
+                    # Submit scores using original method (keep as main submitter)
+                    logger.info("🚀 Now submitting FalconGrasp scores to API...")
                     success = self.api.submit_final_scores(self.game_result_id, individual_scores)
+                    
+                    # Save player CSV with final submission status (after API submission)
+                    self._save_individual_players_csv(self.game_result_id, individual_scores, success)
+                    
                     if success:
                         logger.info("✅ Scores submitted successfully")
                         # Get updated leaderboard
@@ -726,6 +741,107 @@ class GameManager(QThread):
         
         logger.info(f"📊 Prepared scores for {len(individual_scores)} players")
         return individual_scores
+    
+    def _save_individual_players_csv(self, game_result_id: str, individual_scores: list, success: bool):
+        """Save individual player scores for database revision"""
+        try:
+            csv_filename = "Falcon_Individual_Players_Log.csv"
+            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            
+            # Check if file exists to determine if we need headers
+            file_exists = os.path.exists(csv_filename)
+            
+            with open(csv_filename, 'a', newline='', encoding='utf-8') as csvfile:
+                fieldnames = [
+                    'timestamp', 'game_result_id', 'user_id', 'node_id', 
+                    'individual_score', 'submission_success', 'status'
+                ]
+                writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+                
+                # Write header if file is new
+                if not file_exists:
+                    writer.writeheader()
+                    logger.info(f"📝 Created new individual players log file: {csv_filename}")
+                
+                # Determine status based on success parameter
+                if success is None:
+                    status = "pre_submission"
+                elif success:
+                    status = "submitted_success"
+                else:
+                    status = "submitted_failed"
+                
+                # Write one row per player
+                for score_data in individual_scores:
+                    writer.writerow({
+                        'timestamp': timestamp,
+                        'game_result_id': game_result_id,
+                        'user_id': score_data.get('userID', 'Unknown'),
+                        'node_id': score_data.get('nodeID', 'N/A'),
+                        'individual_score': score_data.get('score', 0),
+                        'submission_success': success,
+                        'status': status
+                    })
+                
+            if success is None:
+                logger.info(f"📝 Player data saved to {csv_filename} BEFORE API submission")
+            else:
+                logger.info(f"📝 Player data status updated in {csv_filename} AFTER API submission")
+            
+        except Exception as e:
+            logger.error(f"❌ Error saving individual players log to CSV: {e}")
+            # Don't let CSV errors break the game flow
+    
+    def _save_pre_submission_log(self, game_result_id: str, individual_scores: list):
+        """Save a pre-submission log entry for safety"""
+        try:
+            csv_filename = "Falcon_Pre_Submission_Backup.csv"
+            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            
+            # Check if file exists to determine if we need headers
+            file_exists = os.path.exists(csv_filename)
+            
+            with open(csv_filename, 'a', newline='', encoding='utf-8') as csvfile:
+                fieldnames = [
+                    'timestamp', 'game_result_id', 'total_players', 'total_score', 
+                    'player_ids', 'individual_scores_json', 'status'
+                ]
+                writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+                
+                # Write header if file is new
+                if not file_exists:
+                    writer.writeheader()
+                    logger.info(f"📝 Created new pre-submission backup file: {csv_filename}")
+                
+                # Calculate totals
+                total_players = len(individual_scores)
+                total_score = sum(score_data.get('score', 0) for score_data in individual_scores)
+                
+                # Create player IDs list
+                player_ids = [score_data.get('userID', 'Unknown') for score_data in individual_scores]
+                player_ids_str = " | ".join(player_ids)
+                
+                # Convert individual scores to JSON string for complete backup
+                individual_scores_json = json.dumps(individual_scores)
+                
+                writer.writerow({
+                    'timestamp': timestamp,
+                    'game_result_id': game_result_id,
+                    'total_players': total_players,
+                    'total_score': total_score,
+                    'player_ids': player_ids_str,
+                    'individual_scores_json': individual_scores_json,
+                    'status': 'saved_before_submission'
+                })
+                
+            logger.info(f"📝 Pre-submission backup saved to {csv_filename}")
+            logger.info(f"   🆔 Game ID: {game_result_id}")
+            logger.info(f"   👥 Players: {total_players}")
+            logger.info(f"   🏆 Total Score: {total_score}")
+            
+        except Exception as e:
+            logger.error(f"❌ Error saving pre-submission backup: {e}")
+            # Don't let CSV errors break the game flow
     
     def _update_leaderboard(self):
         """Update the leaderboard data"""
@@ -1638,24 +1754,29 @@ class TeamMember_screen(QtWidgets.QMainWindow):
             logger.info("🔄 Home screen switching to Inactive state")
             
             # Stop the timer2 if it exists
-            if hasattr(self, 'timer2') and self.timer2:
+            if hasattr(self, 'timer2') and self.timer2 is not None:
                 self.timer2.stop()
             
             # Load the inactive GIF based on screen size (same logic as CatchTheStick.py)
             global scaled
             if scaled == 1:
-                self.movie = QMovie("Assets/1k/portrait/portrait_CatchTheStick_inActive.gif")
-                self.movie.setCacheMode(QMovie.CacheAll)
+                if hasattr(self, 'movie') and self.movie is not None:
+                    self.movie = QMovie("Assets/1k/portrait/portrait_CatchTheStick_inActive.gif")
+                    self.movie.setCacheMode(QMovie.CacheAll)
             else:
-                self.movie = QMovie("Assets/1k/portrait/portrait_CatchTheStick_inActive.gif")
-                self.movie.setCacheMode(QMovie.CacheAll)
+                if hasattr(self, 'movie') and self.movie is not None:
+                    self.movie = QMovie("Assets/1k/portrait/portrait_CatchTheStick_inActive.gif")
+                    self.movie.setCacheMode(QMovie.CacheAll)
             
             # Set the new movie and start it
-            self.Background.setMovie(self.movie)
-            self.movie.start()
+            if hasattr(self, 'Background') and self.Background is not None: 
+                self.Background.setMovie(self.movie)
+            if hasattr(self, 'movie') and self.movie:
+                self.movie.start()
             
             # Show the table (same as CatchTheStick.py)
-            self.LeaderboardTable.show()
+            if hasattr(self, 'LeaderboardTable') and self.LeaderboardTable is not None:
+                self.LeaderboardTable.show()
             
             # Set global homeOpened flag (same as CatchTheStick.py)
             global homeOpened
@@ -1664,7 +1785,7 @@ class TeamMember_screen(QtWidgets.QMainWindow):
             logger.info("✅ Home screen switched to Inactive state successfully")
             
         except Exception as e:
-            logger.error(f"❌ Error switching to Inactive state: {e}")
+            logger.error(f"❌ Error switching to Inactive state 2: {e}")
     
     def closeEvent(self, event):
         logger.info("🔄 Home screen closing...")
@@ -1979,7 +2100,13 @@ class Home_screen(QtWidgets.QMainWindow):
         """Switch to inactive state with inActive GIF and show table (same as CatchTheStick.py)"""
         try:
             logger.info("🔄 Home screen switching to Inactive state")
+            # check if self is deleted
+             # Set global homeOpened flag (same as CatchTheStick.py)
+            global homeOpened
+            homeOpened = True
             
+            if self.destroyed == True:
+                return
             # Stop the timer2 if it exists
             if hasattr(self, 'timer2') and self.timer2:
                 self.timer2.stop()
@@ -1987,26 +2114,30 @@ class Home_screen(QtWidgets.QMainWindow):
             # Load the inactive GIF based on screen size (same logic as CatchTheStick.py)
             global scaled
             if scaled == 1:
-                self.movie = QMovie("Assets/1k/portrait/portrait_CatchTheStick_inActive.gif")
-                self.movie.setCacheMode(QMovie.CacheAll)
+                if hasattr(self, 'movie') and self.movie is not None:
+                    self.movie = QMovie("Assets/1k/portrait/portrait_CatchTheStick_inActive.gif")
+                    self.movie.setCacheMode(QMovie.CacheAll)
             else:
-                self.movie = QMovie("Assets/1k/portrait/portrait_CatchTheStick_inActive.gif")
-                self.movie.setCacheMode(QMovie.CacheAll)
-            
+                if hasattr(self, 'movie') and self.movie is not None:
+                    self.movie = QMovie("Assets/1k/portrait/portrait_CatchTheStick_inActive.gif")
+                    self.movie.setCacheMode(QMovie.CacheAll)
+                
             # Set the new movie and start it
-            self.Background.setMovie(self.movie)
-            self.movie.start()
+            if hasattr(self, 'Background') and self.Background is not None:
+                self.Background.setMovie(self.movie)
+            if hasattr(self, 'movie') and self.movie:
+                self.movie.start()
             
             # Show the table (same as CatchTheStick.py)
-            self.LeaderboardTable.show()
+            if hasattr(self, 'LeaderboardTable') and self.LeaderboardTable is not None:
+                self.LeaderboardTable.show()
             
-            # Set global homeOpened flag (same as CatchTheStick.py)
-            global homeOpened
-            homeOpened = True
+
+            
             
             logger.info("✅ Home screen switched to Inactive state successfully")
 
-            if hasattr(self, 'timer3') and self.timer3:
+            if hasattr(self, 'timer3') and self.timer3 is not None:
                 self.timer3.start(9000)
                 logger.info("⏰ Home screen timer3 set for 9 second to switch to Inactive state")
             
@@ -2016,28 +2147,30 @@ class Home_screen(QtWidgets.QMainWindow):
     def looping(self):
         # Safe timer stop
         try:
-            if hasattr(self, 'timer3') and self.timer3:
+            if hasattr(self, 'timer3') and self.timer3 is not None:
                 self.timer3.stop()
         except (RuntimeError, AttributeError):
             pass
             
         # Safe table hide - check if widget still exists    
         try:
-            if hasattr(self, 'LeaderboardTable') and self.LeaderboardTable:
+            if hasattr(self, 'LeaderboardTable') and self.LeaderboardTable is not None:
                 self.LeaderboardTable.hide()
         except (RuntimeError, AttributeError):
             logger.debug("LeaderboardTable already deleted, skipping hide()")
             
         if scaled == 1:
-            self.movie = QMovie("Assets/1k/portrait/portrait_CatchTheStick_intro.gif")
-            self.movie.setCacheMode(QMovie.CacheAll)
+            if hasattr(self, 'movie') and self.movie is not None:
+                self.movie = QMovie("Assets/1k/portrait/portrait_CatchTheStick_intro.gif")
+                self.movie.setCacheMode(QMovie.CacheAll)
         else:
-            self.movie = QMovie("Assets/1k/portrait/portrait_CatchTheStick_intro.gif")
-            self.movie.setCacheMode(QMovie.CacheAll)
+            if hasattr(self, 'movie') and self.movie is not None:
+                self.movie = QMovie("Assets/1k/portrait/portrait_CatchTheStick_intro.gif")
+                self.movie.setCacheMode(QMovie.CacheAll)
             
         # Safe background and movie operations
         try:
-            if hasattr(self, 'Background') and self.Background:
+            if hasattr(self, 'Background') and self.Background is not None:
                 self.Background.setMovie(self.movie)
                 self.movie.start()
         except (RuntimeError, AttributeError):
@@ -2045,7 +2178,7 @@ class Home_screen(QtWidgets.QMainWindow):
             
         # Safe timer start
         try:
-            if hasattr(self, 'timer2') and self.timer2:
+            if hasattr(self, 'timer2') and self.timer2 is not None:
                 self.timer2.start(11000)
         except (RuntimeError, AttributeError):
             logger.debug("Timer already deleted, skipping start()")
@@ -2060,8 +2193,9 @@ class Home_screen(QtWidgets.QMainWindow):
             
             # Clear all rows first
             for i in range(5):
-                self.LeaderboardTable.setItem(i, 0, QtWidgets.QTableWidgetItem(""))
-                self.LeaderboardTable.setItem(i, 1, QtWidgets.QTableWidgetItem(""))
+                if hasattr(self, 'LeaderboardTable') and self.LeaderboardTable is not None:
+                    self.LeaderboardTable.setItem(i, 0, QtWidgets.QTableWidgetItem(""))
+                    self.LeaderboardTable.setItem(i, 1, QtWidgets.QTableWidgetItem(""))
             
             # Sort data by score (descending)
             sorted_data = sorted(list_top5_FalconGrasp, key=lambda item: item[1], reverse=True)
@@ -2074,11 +2208,13 @@ class Home_screen(QtWidgets.QMainWindow):
 
                 team_item = QtWidgets.QTableWidgetItem(str(team))
                 team_item.setTextAlignment(QtCore.Qt.AlignCenter)
-                self.LeaderboardTable.setItem(i, 0, team_item)
+                if hasattr(self, 'LeaderboardTable') and self.LeaderboardTable is not None:
+                    self.LeaderboardTable.setItem(i, 0, team_item)
                 
                 score_item = QtWidgets.QTableWidgetItem(f"{score:,}")
                 score_item.setTextAlignment(QtCore.Qt.AlignCenter)
-                self.LeaderboardTable.setItem(i, 1, score_item)
+                if hasattr(self, 'LeaderboardTable') and self.LeaderboardTable is not None:
+                    self.LeaderboardTable.setItem(i, 1, score_item)
             
             # If no data, show placeholder
             if not list_top5_FalconGrasp:
@@ -2137,6 +2273,11 @@ class Home_screen(QtWidgets.QMainWindow):
                 self.movie = None
             except Exception as e:
                 logger.warning(f"⚠️  Error stopping movie: {e}")
+        if hasattr(self, 'Background') and self.Background:
+            try:
+                self.Background.setMovie(None)
+            except Exception as e:
+                logger.warning(f"⚠️  Error stopping Background: {e}")
         if hasattr(self, 'player') and self.player:
             try:
                 self.player.stop()
@@ -2155,10 +2296,10 @@ class Active_screen(QWidget):
         logger.info("🔧 Initializing Active_screen with MQTT thread...")
         
         self.mqtt_thread = MqttThread('localhost')
-        self.mqtt_thread.start_signal.connect(self.start_game)
-        self.mqtt_thread.stop_signal.connect(self.stop_game)
-        self.mqtt_thread.restart_signal.connect(self.restart_game)
-        self.mqtt_thread.activate_signal.connect(lambda: logger.info("🔋 Game activated"))
+        # self.mqtt_thread.start_signal.connect(self.start_game)
+        # self.mqtt_thread.stop_signal.connect(self.stop_game)
+        # self.mqtt_thread.restart_signal.connect(self.restart_game)
+        # self.mqtt_thread.activate_signal.connect(lambda: logger.info("🔋 Game activated"))
         self.mqtt_thread.deactivate_signal.connect(self.deactivate)
         self.mqtt_thread.message_signal.connect(lambda data: self.ReceiveData(data))
         self.mqtt_thread.start()
@@ -2389,6 +2530,10 @@ class Active_screen(QWidget):
         try:
             logger.info("🚀 Starting FalconGrasp game...")
             
+            # Publish MQTT game start message
+            self._safe_mqtt_publish("FalconGrasp/game/start", "start")
+            logger.info("📡 Published MQTT game start message")
+            
             # Reset player scores
             list_players_score = [0,0,0,0]
             
@@ -2432,6 +2577,10 @@ class Active_screen(QWidget):
             # Calculate final score from player scores
             global list_players_score
             scored = sum(list_players_score[:5])  # Sum of all player scores
+            
+            # Publish MQTT game stop message
+            self._safe_mqtt_publish("FalconGrasp/game/stop", "stop")
+            logger.info("📡 Published MQTT game stop message")
             
             # Stop timers
             if hasattr(self, 'TimerGame') and self.TimerGame:
@@ -2493,6 +2642,10 @@ class Active_screen(QWidget):
         global gameRunning
         try:
             logger.info("🚫 Cancelling FalconGrasp game...")
+            
+            # Publish MQTT game stop message for cancellation
+            self._safe_mqtt_publish("FalconGrasp/game/stop", "stop")
+            logger.info("📡 Published MQTT game stop message for cancellation")
             
             gameRunning = False  # Reset game running flag
             
@@ -3126,11 +3279,38 @@ class MainApp(QtWidgets.QMainWindow):
         
         logger.info("✅ Previous screens cleaned up")
 
+    def _safe_mqtt_publish(self, topic, message):
+        """Safely publish MQTT message with proper error handling"""
+        try:
+            if hasattr(self, 'ui_active') and self.ui_active:
+                if hasattr(self.ui_active, 'mqtt_thread') and self.ui_active.mqtt_thread:
+                    if (hasattr(self.ui_active.mqtt_thread, 'client') and 
+                        self.ui_active.mqtt_thread.client and 
+                        hasattr(self.ui_active.mqtt_thread, 'connected') and 
+                        self.ui_active.mqtt_thread.connected):
+                        self.ui_active.mqtt_thread.client.publish(topic, message)
+                        logger.debug(f"📡 MQTT message published: {topic} = {message}")
+                    else:
+                        logger.warning(f"⚠️  MQTT client not connected, cannot publish: {topic}")
+                else:
+                    logger.warning(f"⚠️  MQTT thread not available, cannot publish: {topic}")
+            else:
+                logger.warning(f"⚠️  Active screen not available, cannot publish: {topic}")
+        except Exception as e:
+            logger.error(f"❌ Error publishing MQTT message {topic}: {e}")
+
     def _handle_game_cancellation(self):
         """Robust handler for game cancellation that works regardless of current screen state"""
         logger.warning("🚫" + "=" * 50)
         logger.warning("🚫 GAME CANCELLATION DETECTED")
         logger.warning("🚫" + "=" * 50)
+        
+        # Publish MQTT game stop message for cancellation
+        try:
+            self._safe_mqtt_publish("FalconGrasp/game/stop", "stop")
+            logger.info("📡 Published MQTT game stop message for cancellation")
+        except Exception as e:
+            logger.warning(f"⚠️  Error publishing MQTT stop message: {e}")
         
         try:
             # Safely cleanup active screen components
@@ -3246,6 +3426,7 @@ class MainApp(QtWidgets.QMainWindow):
     def _safe_mqtt_subscribe(self):
         """Safely subscribe to MQTT data topics with proper error handling"""
         try:
+            logger.info("🔄 Subscribing to MQTT data topics...")
             if (hasattr(self.ui_active, 'mqtt_thread') and 
                 self.ui_active.mqtt_thread and 
                 hasattr(self.ui_active.mqtt_thread, 'subscribe_to_data_topics')):
@@ -3266,6 +3447,9 @@ class MainApp(QtWidgets.QMainWindow):
                             logger.warning("⚠️  MQTT reconnection failed")
             else:
                 logger.warning("⚠️  MQTT thread not available for subscription")
+            logger.info("✅ Successfully subscribed to MQTT data topics")
+
+            logger.info("✅ Successfully subscribed to MQTT control topics")
         except Exception as e:
             logger.error(f"❌ Error subscribing to MQTT data topics: {e}")
 

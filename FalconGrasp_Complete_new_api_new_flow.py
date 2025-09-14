@@ -34,7 +34,7 @@ try:
     from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
     multimedia_available = True
 except Exception as e:
-    print(f"⚠️  PyQt5 multimedia not available: {e}")
+    print(f"  PyQt5 multimedia not available: {e}")
     multimedia_available = False
     # Create dummy classes for compatibility
     class QMediaPlayer:
@@ -67,38 +67,38 @@ try:
     
     # Get main logger
     logger = get_logger(__name__)
-    logger.info("🎮============================================================")
-    logger.info("🎮 STARTING FALCONGRASP GAME WITH COMPLETE UI AND NEW API")
-    logger.info("🎮============================================================")
-    logger.info(f"📄 Logs are being saved to: {log_file}")
+    logger.info("============================================================")
+    logger.info(" STARTING FALCONGRASP GAME WITH COMPLETE UI AND NEW API")
+    logger.info("============================================================")
+    logger.info(f" Logs are being saved to: {log_file}")
     
     def trace_flags(location, game_manager=None):
         """Comprehensive flag tracing utility"""
         global gameStarted, gameRunning, homeOpened, list_players_id, list_players_score
         
-        logger.info(f"🔍 FLAG TRACE [{location}]:")
-        logger.info(f"   🌍 Global flags: gameStarted={gameStarted}, gameRunning={gameRunning}, homeOpened={homeOpened}")
-        logger.info(f"   👥 Players: count={len(list_players_id)}, scores={list_players_score[:4]}")
-        logger.info(f"   📊 Player IDs: {list_players_id[:4] if len(list_players_id) >= 4 else list_players_id}")
+        logger.info(f" FLAG TRACE [{location}]:")
+        logger.info(f"    Global flags: gameStarted={gameStarted}, gameRunning={gameRunning}, homeOpened={homeOpened}")
+        logger.info(f"    Players: count={len(list_players_id)}, scores={list_players_score[:4]}")
+        logger.info(f"    Player IDs: {list_players_id[:4] if len(list_players_id) >= 4 else list_players_id}")
         
         if game_manager:
-            logger.info(f"   🎮 GameManager: started_flag={game_manager.started_flag}, cancel_flag={game_manager.cancel_flag}")
-            logger.info(f"   🎯 GameManager: submit_score_flag={game_manager.submit_score_flag}, game_result_id={game_manager.game_result_id}")
+            logger.info(f"    GameManager: started_flag={game_manager.started_flag}, cancel_flag={game_manager.cancel_flag}")
+            logger.info(f"    GameManager: submit_score_flag={game_manager.submit_score_flag}, game_result_id={game_manager.game_result_id}")
         
         # CRITICAL: Ensure we always have exactly 5 players
         if len(list_players_id) != 4:
-            logger.warning(f"⚠️  PLAYER COUNT MISMATCH: Expected 4, got {len(list_players_id)}")
+            logger.warning(f"  PLAYER COUNT MISMATCH: Expected 4, got {len(list_players_id)}")
         if len(list_players_score) != 4:
-            logger.warning(f"⚠️  SCORE COUNT MISMATCH: Expected 4, got {len(list_players_score)}")
+            logger.warning(f"  SCORE COUNT MISMATCH: Expected 4, got {len(list_players_score)}")
         
-        logger.info(f"🔍 END FLAG TRACE [{location}]")
+        logger.info(f" END FLAG TRACE [{location}]")
 except ImportError as e:
     # Fallback logging if our modules aren't available
     import logging
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
-    logger.error(f"❌ Failed to import game modules: {e}")
-    logger.error("🔧 Please ensure config.py, utils/, and api/ are available")
+    logger.error(f" Failed to import game modules: {e}")
+    logger.error(" Please ensure config.py, utils/, and api/ are available")
     sys.exit(1)
 
 # Game configuration from settings
@@ -133,22 +133,22 @@ gameRunning = False
 try:
     api = GameAPI()
     if api.authenticate():
-        logger.info("✅ API authentication successful")
-        logger.info("📊 Loading initial leaderboard for 'Falcon's Grasp'...")
+        logger.info(" API authentication successful")
+        logger.info(" Loading initial leaderboard for 'Falcon's Grasp'...")
         leaderboard = api.get_leaderboard("Falcon's Grasp")
         list_top5_FalconGrasp.extend(leaderboard)
-        logger.info(f"📊 Initial leaderboard loaded: {len(leaderboard)} entries")
+        logger.info(f" Initial leaderboard loaded: {len(leaderboard)} entries")
         if leaderboard:
-            logger.info("🏆 Top teams:")
+            logger.info(" Top teams:")
             for i, (team_name, score) in enumerate(leaderboard[:5], 1):
                 logger.info(f"   {i}. {team_name} - {score:,} points")
     else:
-        logger.warning("⚠️  Failed to authenticate for initial leaderboard")
+        logger.warning("  Failed to authenticate for initial leaderboard")
 except Exception as e:
-    logger.error(f"❌ Error loading initial leaderboard: {e}")
+    logger.error(f" Error loading initial leaderboard: {e}")
 
 # FalconGrasp uses MQTT-based detection instead of ML models
-logger.info("✅ FalconGrasp detection system initialized (MQTT-based)")
+logger.info(" FalconGrasp detection system initialized (MQTT-based)")
 
 
 
@@ -178,33 +178,33 @@ class MqttThread(QThread):
         self.client.on_connect = self.on_connect
         self.client.on_disconnect = self.on_disconnect
         self.client.on_message = self.on_message
-        logger.debug("🔌 MqttThread initialized")
+        logger.debug(" MqttThread initialized")
 
     def on_connect(self, client, userdata, flags, rc, properties=None):
         if rc == 0:
             self.connected = True
-            logger.info(f"✅ MQTT connected successfully to {self.broker}:{self.port}")
+            logger.info(f" MQTT connected successfully to {self.broker}:{self.port}")
             
             # Subscribe to control topics immediately upon connection
             for topic in self.control_topics:
                 client.subscribe(topic)
-                logger.debug(f"📡 Subscribed to control topic: {topic}")
+                logger.debug(f" Subscribed to control topic: {topic}")
             
-            logger.info(f"📡 Subscribed to {len(self.control_topics)} control topics")
+            logger.info(f" Subscribed to {len(self.control_topics)} control topics")
         else:
             self.connected = False
-            logger.error(f"❌ MQTT connection failed with code: {rc}")
+            logger.error(f" MQTT connection failed with code: {rc}")
 
     def on_disconnect(self, client, userdata, rc, properties=None):
         self.connected = False
         self.subscribed = False
-        logger.warning(f"🔌 MQTT disconnected (rc: {rc})")
+        logger.warning(f" MQTT disconnected (rc: {rc})")
 
     def on_message(self, client, userdata, msg, properties=None):
         try:
             topic = msg.topic
             message = msg.payload.decode()
-            logger.debug(f"📨 MQTT message received: {topic} = {message}")
+            logger.debug(f" MQTT message received: {topic} = {message}")
             
             if topic == "FalconGrasp/game/start":
                 self.handle_start()
@@ -225,19 +225,19 @@ class MqttThread(QThread):
                     TimerValue = int(message) * 1000
                     self.timer_signal.emit(TimerValue)
                 except ValueError:
-                    logger.warning(f"⚠️  Invalid timer value: {message}")
+                    logger.warning(f"  Invalid timer value: {message}")
             elif topic == "FalconGrasp/game/timerfinal":
                 try:
                     global final_screen_timer_idle
                     final_screen_timer_idle = int(message) * 1000
                 except ValueError:
-                    logger.warning(f"⚠️  Invalid final timer value: {message}")
+                    logger.warning(f"  Invalid final timer value: {message}")
             else:
                 # Handle data messages for camera topics
                 if self.subscribed:
                     self.handle_data_message(msg)
         except Exception as e:
-            logger.warning(f"⚠️  Error processing MQTT message: {e}")
+            logger.warning(f"  Error processing MQTT message: {e}")
     
     def handle_data_message(self, msg):
         """Handle data messages from camera topics"""
@@ -250,7 +250,7 @@ class MqttThread(QThread):
             else:
                 logger.debug(f"Received message from non-subscribed topic: {msg.topic}")
         except Exception as e:
-            logger.warning(f"⚠️  Error handling data message: {e}")
+            logger.warning(f"  Error handling data message: {e}")
     
     def handle_restart(self):
         logger.debug("Game restarted")
@@ -261,7 +261,7 @@ class MqttThread(QThread):
         # Set global gameStarted to True when game starts via MQTT
         global gameStarted
         gameStarted = True
-        logger.info("🚀 Game started via MQTT - gameStarted set to True")
+        logger.info("Game started via MQTT - gameStarted set to True")
         self.subscribe_to_data_topics()
         self.start_signal.emit()
     
@@ -274,20 +274,20 @@ class MqttThread(QThread):
         # Set global gameStarted to False so API polling will stop
         global gameStarted
         gameStarted = False
-        logger.info("🛑 Game stopped via MQTT - gameStarted set to False")
+        logger.info(" Game stopped via MQTT - gameStarted set to False")
         self.stop_signal.emit()
 
     def run(self):
         """MQTT thread main loop with error handling"""
         try:
-            logger.debug("🔌 Starting MQTT connection...")
+            logger.debug(" Starting MQTT connection...")
             self.client.connect(self.broker, self.port, 60)
-            logger.debug("✅ MQTT connected successfully")
+            logger.debug(" MQTT connected successfully")
             self.client.loop_forever()
         except Exception as e:
-            logger.error(f"❌ MQTT connection error: {e}")
+            logger.error(f" MQTT connection error: {e}")
         finally:
-            logger.debug("🔄 MQTT thread run() method exiting")
+            logger.debug(" MQTT thread run() method exiting")
 
     def subscribe_to_data_topics(self):
         if not self.subscribed:
@@ -305,7 +305,7 @@ class MqttThread(QThread):
     
     def stop(self):
         """Safely stop the MQTT thread and cleanup resources"""
-        logger.debug("🔄 Stopping MqttThread...")
+        logger.debug(" Stopping MqttThread...")
         
         try:
             # Unsubscribe from all topics first
@@ -322,27 +322,27 @@ class MqttThread(QThread):
                     
                     self.subscribed = False
                     self.connected = False
-                    logger.debug("✅ MQTT topics unsubscribed")
+                    logger.debug(" MQTT topics unsubscribed")
                 except Exception as e:
-                    logger.warning(f"⚠️  Error unsubscribing MQTT topics: {e}")
+                    logger.warning(f"  Error unsubscribing MQTT topics: {e}")
                 
                 # Disconnect from broker
                 try:
                     self.client.disconnect()
-                    logger.debug("✅ MQTT client disconnected")
+                    logger.debug(" MQTT client disconnected")
                 except Exception as e:
-                    logger.warning(f"⚠️  Error disconnecting MQTT client: {e}")
+                    logger.warning(f"  Error disconnecting MQTT client: {e}")
             
             # Stop the thread loop
             if self.isRunning():
                 self.quit()
                 if not self.wait(5000):  # Wait up to 5 seconds
-                    logger.warning("⚠️  MqttThread did not finish gracefully")
+                    logger.warning("  MqttThread did not finish gracefully")
                 else:
-                    logger.debug("✅ MqttThread stopped gracefully")
+                    logger.debug(" MqttThread stopped gracefully")
                     
         except Exception as e:
-            logger.warning(f"⚠️  Error stopping MQTT thread: {e}")
+            logger.warning(f"  Error stopping MQTT thread: {e}")
 
 
 class GameManager(QThread):
@@ -361,14 +361,14 @@ class GameManager(QThread):
     
     def __init__(self):
         super().__init__()
-        logger.info("🎮 GameManager initializing...")
+        logger.info(" GameManager initializing...")
         
         # Initialize the GameAPI
         try:
             self.api = GameAPI()
-            logger.info("✅ GameAPI initialized successfully")
+            logger.info(" GameAPI initialized successfully")
         except Exception as e:
-            logger.error(f"❌ Failed to initialize GameAPI: {e}")
+            logger.error(f" Failed to initialize GameAPI: {e}")
             raise
             
         # Game state
@@ -379,68 +379,68 @@ class GameManager(QThread):
         self.cancel_flag = False
         self.game_done = True
         
-        logger.info("✅ GameManager initialized successfully")
+        logger.info(" GameManager initialized successfully")
         
     def run(self):
         """Main game loop following the proper API flow"""
-        logger.info("🚀 GameManager starting main loop...")
+        logger.info("GameManager starting main loop...")
         
         while self.playStatus:
             try:
                 # Manual reset of essential flags only for new game cycle
-                logger.info("🔄 Manual reset of essential flags for new game cycle...")
-                logger.info(f"🔄 BEFORE reset - started_flag: {self.started_flag}")
+                logger.info(" Manual reset of essential flags for new game cycle...")
+                logger.info(f" BEFORE reset - started_flag: {self.started_flag}")
                 self.game_result_id = None
                 self.submit_score_flag = False
                 self.started_flag = False  # CRITICAL: Reset to False like CAGE_Game.py __init__
                 self.cancel_flag = False
                 
                 # Double check that started_flag is False
-                logger.info(f"🔧 AFTER reset - started_flag: {self.started_flag}")
-                logger.info(f"🔧 All flags: game_result_id={self.game_result_id}, submit_score_flag={self.submit_score_flag}, started_flag={self.started_flag}, cancel_flag={self.cancel_flag}")
+                logger.info(f" AFTER reset - started_flag: {self.started_flag}")
+                logger.info(f" All flags: game_result_id={self.game_result_id}, submit_score_flag={self.submit_score_flag}, started_flag={self.started_flag}, cancel_flag={self.cancel_flag}")
                 
                 trace_flags("GAME_CYCLE_START", self)
                 
                 # Step 1: Authenticate
-                logger.info("🔐 Step 1: Authenticating...")
+                logger.info(" Step 1: Authenticating...")
                 if not self.api.authenticate():
-                    logger.error("❌ Authentication failed, retrying in 5 seconds...")
+                    logger.error(" Authentication failed, retrying in 5 seconds...")
                     time.sleep(5)
                     continue
                 
                 # Step 2: Poll for game initialization
-                logger.info("🎯 Step 2: Polling for game initialization...")
+                logger.info(" Step 2: Polling for game initialization...")
                 if not self._poll_initialization():
                     # If initialization fails, reset only essential flags
-                    logger.info("🔄 Initialization failed, resetting essential flags...")
+                    logger.info(" Initialization failed, resetting essential flags...")
                     self.game_result_id = None
                     self.cancel_flag = False
                     continue
                 
                 # Step 3: Poll for game start
-                logger.info("🚀 Step 3: Polling for game start...")
-                logger.info(f"🔧 started_flag before polling: {self.started_flag}")
+                logger.info("Step 3: Polling for game start...")
+                logger.info(f" started_flag before polling: {self.started_flag}")
                 
                 if not self._poll_game_start():
                     # If game start fails (e.g., cancellation), reset only essential flags
-                    logger.info("🔄 Game start failed/cancelled, resetting essential flags...")
+                    logger.info(" Game start failed/cancelled, resetting essential flags...")
                     self.game_result_id = None
                     self.started_flag = False
                     self.cancel_flag = False
                     continue
                 
                 # Step 4: Wait for game completion and submit scores
-                logger.info("📊 Step 4: Waiting for game completion...")
+                logger.info(" Step 4: Waiting for game completion...")
                 if not self._wait_and_submit_scores():
                     # If score submission fails, reset only essential flags
-                    logger.info("🔄 Score submission failed, resetting essential flags...")
+                    logger.info(" Score submission failed, resetting essential flags...")
                     self.submit_score_flag = False
                     self.started_flag = False
                     continue
                     
             except Exception as e:
-                logger.error(f"💥 Error in game loop: {e}")
-                logger.info("🔄 Exception occurred, resetting essential flags...")
+                logger.error(f" Error in game loop: {e}")
+                logger.info(" Exception occurred, resetting essential flags...")
                 self.game_result_id = None
                 self.submit_score_flag = False
                 self.started_flag = False
@@ -465,13 +465,13 @@ class GameManager(QThread):
                     list_players_name = [player.get('name', f'Player {i+1}') for i, player in enumerate(node_ids)]
                     list_players_id = [player.get('userID', f'user_{i+1}') for i, player in enumerate(node_ids)]
                     
-                    logger.info(f"🎮 Game initialized: {self.game_result_id}")
-                    logger.info(f"👥 Team: {teamName}")
-                    logger.info(f"👤 Players: {list_players_name}")
+                    logger.info(f" Game initialized: {self.game_result_id}")
+                    logger.info(f" Team: {teamName}")
+                    logger.info(f" Players: {list_players_name}")
                     
                     # CRITICAL: Ensure exactly 4 players for FalconGrasp
                     if len(list_players_id) != 4:
-                        logger.warning(f"⚠️  API returned {len(list_players_id)} players, FalconGrasp needs exactly 4!")
+                        logger.warning(f"  API returned {len(list_players_id)} players, FalconGrasp needs exactly 4!")
                         # Pad to 4 players
                         while len(list_players_id) < 4:
                             player_num = len(list_players_id) + 1
@@ -480,24 +480,24 @@ class GameManager(QThread):
                         # Trim to 4 players if more than 4
                         list_players_id = list_players_id[:4]
                         list_players_name = list_players_name[:4]
-                        logger.info(f"🔧 Fixed player count to 4: {list_players_id}")
+                        logger.info(f" Fixed player count to 4: {list_players_id}")
                     
                     trace_flags("GAME_INITIALIZATION", self)
                     
                     # Check if home screen is ready
                     global homeOpened
                     if homeOpened:
-                        logger.info("🏠 Home screen ready, emitting init signal")
+                        logger.info(" Home screen ready, emitting init signal")
                         homeOpened = False
                         self.init_signal.emit()
                         return True
                     else:
-                        logger.info("⏳ Waiting for home screen to be ready...")
+                        logger.info(" Waiting for home screen to be ready...")
                 
                 time.sleep(3)  # Poll every 3 seconds
                 
             except Exception as e:
-                logger.error(f"❌ Error polling initialization: {e}")
+                logger.error(f" Error polling initialization: {e}")
                 time.sleep(5)
                 
         return False
@@ -505,11 +505,11 @@ class GameManager(QThread):
     def _poll_game_start(self) -> bool:
         """Poll for game start and continue monitoring during gameplay - Like CAGE_Game.py"""
         if not self.game_result_id:
-            logger.error("❌ No game result ID available")
+            logger.error(" No game result ID available")
             return False
         
-        logger.info(f"🔄 Starting polling with started_flag={self.started_flag}, cancel_flag={self.cancel_flag}")
-        logger.info("🚀 Starting continuous polling for game start...")
+        logger.info(f" Starting polling with started_flag={self.started_flag}, cancel_flag={self.cancel_flag}")
+        logger.info("Starting continuous polling for game start...")
         
         # Create a simple reference object to avoid lambda timing issues
         class FlagRef:
@@ -531,19 +531,19 @@ class GameManager(QThread):
             
             if game_data:
                 status = game_data.get('status')
-                logger.info(f"📊 First polling phase completed with status: {status}")
+                logger.info(f" First polling phase completed with status: {status}")
                 
                 if status == 'playing':
                     # Game started! Emit start signal
-                    logger.info("🎉" + "=" * 50)
-                    logger.info("🚀 GAME START SIGNAL RECEIVED - EMITTING START!")
-                    logger.info(f"🔄 Previous started_flag value: {self.started_flag}")
-                    logger.info("🎉" + "=" * 50)
+                    logger.info("" + "=" * 50)
+                    logger.info("GAME START SIGNAL RECEIVED - EMITTING START!")
+                    logger.info(f" Previous started_flag value: {self.started_flag}")
+                    logger.info("" + "=" * 50)
                     
                     # CRITICAL: Set started_flag to True BEFORE emitting signal
                     # This ensures subsequent 'playing' responses won't trigger another start
                     self.started_flag = True
-                    logger.info(f"🔧 started_flag set to True BEFORE emitting signal: {self.started_flag}")
+                    logger.info(f" started_flag set to True BEFORE emitting signal: {self.started_flag}")
                     
                     trace_flags("GAME_START_SIGNAL_EMIT", self)
                     
@@ -551,41 +551,41 @@ class GameManager(QThread):
                     self.start_signal.emit()
                     
                     
-                    logger.info("✅ Start signal emitted successfully!")
-                    logger.info("🔄 Now subsequent 'playing' responses will be ignored")
+                    logger.info(" Start signal emitted successfully!")
+                    logger.info(" Now subsequent 'playing' responses will be ignored")
                     
                     # Phase 2: Continue monitoring during gameplay
-                    logger.info("🔄 Game started - continuing to monitor for cancellation...")
+                    logger.info(" Game started - continuing to monitor for cancellation...")
                     return self._monitor_during_gameplay()
                     
                 elif status == 'cancel' or game_data.get('cancelled'):
-                    logger.warning("⚠️  Game cancelled before starting")
+                    logger.warning("  Game cancelled before starting")
                     self.cancel_flag = True
                     # CRITICAL: Reset started_flag IMMEDIATELY before emitting cancel
                     self.started_flag = False
-                    logger.warning(f"🔄 started_flag reset to False before cancel: {self.started_flag}")
+                    logger.warning(f" started_flag reset to False before cancel: {self.started_flag}")
                     self.cancel_signal.emit()
                     # Manual reset of essential flags only
                     self.game_result_id = None
                     self.submit_score_flag = False
                     return False
                 elif status == 'submit_triggered':
-                    logger.info("🔄 Score submission triggered before game start")
+                    logger.info(" Score submission triggered before game start")
                     return True
                 else:
-                    logger.warning(f"⚠️  Unexpected status: {status}")
+                    logger.warning(f"  Unexpected status: {status}")
                     return False
             else:
-                logger.warning("⚠️  No game data returned from continuous polling")
+                logger.warning("  No game data returned from continuous polling")
                 return False
                 
         except Exception as e:
-            logger.error(f"❌ Error in game start polling: {e}")
+            logger.error(f" Error in game start polling: {e}")
             return False
     
     def _monitor_during_gameplay(self) -> bool:
         """Continue monitoring for cancellation during active gameplay"""
-        logger.info("🎮 Monitoring for cancellation during gameplay...")
+        logger.info(" Monitoring for cancellation during gameplay...")
         
         try:
             # Create a callback to check if game has stopped
@@ -607,7 +607,7 @@ class GameManager(QThread):
                 
                 # Now check if game has actually stopped (timers stopped)
                 if not gameStarted:
-                    logger.info("🛑 Game timers stopped (gameStarted=False) - stopping API polling")
+                    logger.info(" Game timers stopped (gameStarted=False) - stopping API polling")
                     return True
                     
                 return False
@@ -623,65 +623,65 @@ class GameManager(QThread):
             
             if game_data:
                 status = game_data.get('status')
-                logger.info(f"📊 Gameplay monitoring completed with status: {status}")
+                logger.info(f" Gameplay monitoring completed with status: {status}")
                 
                 if status == 'cancel' or game_data.get('cancelled'):
-                    logger.warning("⚠️  Game cancelled during gameplay")
+                    logger.warning("  Game cancelled during gameplay")
                     self.cancel_flag = True
                     # CRITICAL: Reset started_flag IMMEDIATELY before emitting cancel
                     self.started_flag = False
-                    logger.warning(f"🔄 started_flag reset to False during gameplay cancel: {self.started_flag}")
+                    logger.warning(f" started_flag reset to False during gameplay cancel: {self.started_flag}")
                     self.cancel_signal.emit()
                     # Manual reset of essential flags only
                     self.game_result_id = None
                     self.submit_score_flag = False
                     return False
                 elif status == 'game_stopped':
-                    logger.info("✅ Game stopped naturally - polling terminated successfully")
+                    logger.info(" Game stopped naturally - polling terminated successfully")
                     return True
                 elif status == 'submit_triggered':
-                    logger.info("🔄 Score submission triggered during gameplay")
+                    logger.info(" Score submission triggered during gameplay")
                     return True
                 else:
-                    logger.debug(f"📋 Gameplay monitoring ended with status: {status}")
+                    logger.debug(f" Gameplay monitoring ended with status: {status}")
                     return True
             else:
-                logger.warning("⚠️  No data from gameplay monitoring")
+                logger.warning("  No data from gameplay monitoring")
                 return True
                 
         except Exception as e:
-            logger.error(f"❌ Error in gameplay monitoring: {e}")
+            logger.error(f" Error in gameplay monitoring: {e}")
             return True
     
     def _wait_and_submit_scores(self) -> bool:
         """Wait for game completion and submit scores"""
-        logger.info("⏳ Waiting for score submission flag or cancellation...")
-        logger.info(f"🔄 Current flags: submit_score_flag={self.submit_score_flag}, cancel_flag={self.cancel_flag}")
+        logger.info(" Waiting for score submission flag or cancellation...")
+        logger.info(f" Current flags: submit_score_flag={self.submit_score_flag}, cancel_flag={self.cancel_flag}")
         
         while self.playStatus and not self.cancel_flag:
             if self.submit_score_flag:
-                logger.info("🎯 submit_score_flag detected! Processing score submission...")
+                logger.info(" submit_score_flag detected! Processing score submission...")
                 trace_flags("SCORE_SUBMISSION_START", self)
                 try:
                     # Prepare individual scores for FalconGrasp
                     global scored, list_players_score, list_players_id
                     individual_scores = self._prepare_individual_scores(scored, list_players_score, list_players_id)
                     
-                    # 🔒 SAVE PLAYER DATA TO CSV FIRST (before API submission)
-                    logger.info("💾 Saving FalconGrasp player data to CSV before API submission...")
+                    #  SAVE PLAYER DATA TO CSV FIRST (before API submission)
+                    logger.info(" Saving FalconGrasp player data to CSV before API submission...")
                     self._save_individual_players_csv(self.game_result_id, individual_scores, None)  # None = pre-submission
                     self._save_pre_submission_log(self.game_result_id, individual_scores)
-                    logger.info("✅ FalconGrasp player data saved locally before submission")
+                    logger.info(" FalconGrasp player data saved locally before submission")
                     
                     # Submit scores using original method (keep as main submitter)
-                    logger.info("🚀 Now submitting FalconGrasp scores to API...")
+                    logger.info("Now submitting FalconGrasp scores to API...")
                     success = self.api.submit_final_scores(self.game_result_id, individual_scores)
                     
                     # Save player CSV with final submission status (after API submission)
                     self._save_individual_players_csv(self.game_result_id, individual_scores, success)
                     
                     if success:
-                        logger.info("✅ Scores submitted successfully")
+                        logger.info(" Scores submitted successfully")
                         # Get updated leaderboard
                         self._update_leaderboard()
                         self.submit_signal.emit()
@@ -691,18 +691,18 @@ class GameManager(QThread):
                         self.started_flag = False
                         return True
                     else:
-                        logger.error("❌ Failed to submit scores")
+                        logger.error(" Failed to submit scores")
                         time.sleep(5)
                         
                 except Exception as e:
-                    logger.error(f"❌ Error submitting scores: {e}")
+                    logger.error(f" Error submitting scores: {e}")
                     time.sleep(5)
             else:
                 # Periodic debug logging every 10 seconds
                 import time
                 current_time = time.time()
                 if not hasattr(self, '_last_wait_log') or current_time - self._last_wait_log > 10:
-                    logger.info(f"⏳ Still waiting... submit_score_flag={self.submit_score_flag}, cancel_flag={self.cancel_flag}")
+                    logger.info(f" Still waiting... submit_score_flag={self.submit_score_flag}, cancel_flag={self.cancel_flag}")
                     self._last_wait_log = current_time
                 time.sleep(1)  # Check every second for score submission flag
                 
@@ -711,15 +711,15 @@ class GameManager(QThread):
     def _prepare_individual_scores(self, total_score: int, player_scores: list, player_ids: list) -> list:
         """Prepare individual scores in the required format for FalconGrasp - 4 players"""
         if not player_ids:
-            logger.warning("⚠️  No player IDs available, using default")
+            logger.warning("  No player IDs available, using default")
             player_ids = ["default_user", "default_user", "default_user", "default_user"]
-        print(f"🎯 Player IDs: {player_ids}")
+        print(f" Player IDs: {player_ids}")
         individual_scores = []
         
         # For FalconGrasp, use individual player scores if available
         if player_scores and len(player_scores) >= len(player_ids):
             for i, score in enumerate(player_scores[:len(player_ids)]):
-                print(f"🎯 Score: {score}")
+                print(f" Score: {score}")
                 user_id = player_ids[i] if i < len(player_ids) else f"user_{i+1}"
                 individual_scores.append({
                     "userID": user_id,
@@ -739,7 +739,7 @@ class GameManager(QThread):
                     "score": score
                 })
         
-        logger.info(f"📊 Prepared scores for {len(individual_scores)} players")
+        logger.info(f" Prepared scores for {len(individual_scores)} players")
         return individual_scores
     
     def _save_individual_players_csv(self, game_result_id: str, individual_scores: list, success: bool):
@@ -761,7 +761,7 @@ class GameManager(QThread):
                 # Write header if file is new
                 if not file_exists:
                     writer.writeheader()
-                    logger.info(f"📝 Created new individual players log file: {csv_filename}")
+                    logger.info(f" Created new individual players log file: {csv_filename}")
                 
                 # Determine status based on success parameter
                 if success is None:
@@ -784,12 +784,12 @@ class GameManager(QThread):
                     })
                 
             if success is None:
-                logger.info(f"📝 Player data saved to {csv_filename} BEFORE API submission")
+                logger.info(f" Player data saved to {csv_filename} BEFORE API submission")
             else:
-                logger.info(f"📝 Player data status updated in {csv_filename} AFTER API submission")
+                logger.info(f" Player data status updated in {csv_filename} AFTER API submission")
             
         except Exception as e:
-            logger.error(f"❌ Error saving individual players log to CSV: {e}")
+            logger.error(f" Error saving individual players log to CSV: {e}")
             # Don't let CSV errors break the game flow
     
     def _save_pre_submission_log(self, game_result_id: str, individual_scores: list):
@@ -811,7 +811,7 @@ class GameManager(QThread):
                 # Write header if file is new
                 if not file_exists:
                     writer.writeheader()
-                    logger.info(f"📝 Created new pre-submission backup file: {csv_filename}")
+                    logger.info(f" Created new pre-submission backup file: {csv_filename}")
                 
                 # Calculate totals
                 total_players = len(individual_scores)
@@ -834,35 +834,35 @@ class GameManager(QThread):
                     'status': 'saved_before_submission'
                 })
                 
-            logger.info(f"📝 Pre-submission backup saved to {csv_filename}")
-            logger.info(f"   🆔 Game ID: {game_result_id}")
-            logger.info(f"   👥 Players: {total_players}")
-            logger.info(f"   🏆 Total Score: {total_score}")
+            logger.info(f" Pre-submission backup saved to {csv_filename}")
+            logger.info(f"   Game ID: {game_result_id}")
+            logger.info(f"    Players: {total_players}")
+            logger.info(f"    Total Score: {total_score}")
             
         except Exception as e:
-            logger.error(f"❌ Error saving pre-submission backup: {e}")
+            logger.error(f" Error saving pre-submission backup: {e}")
             # Don't let CSV errors break the game flow
     
     def _update_leaderboard(self):
         """Update the leaderboard data"""
         try:
             global list_top5_FalconGrasp
-            logger.info("📊 Fetching leaderboard for 'Falcon's Grasp'...")
+            logger.info(" Fetching leaderboard for 'Falcon's Grasp'...")
             leaderboard = self.api.get_leaderboard("Falcon's Grasp")
-            logger.info(f"📊 Leaderboard received: {leaderboard}")
+            logger.info(f" Leaderboard received: {leaderboard}")
             
             list_top5_FalconGrasp.clear()
             list_top5_FalconGrasp.extend(leaderboard)
             
-            logger.info(f"📊 Leaderboard updated with {len(leaderboard)} entries")
+            logger.info(f" Leaderboard updated with {len(leaderboard)} entries")
             
             # Update the UI table if it exists
             if hasattr(self, 'UpdateTable'):
                 self.UpdateTable()
-                logger.info("📊 Leaderboard table UI updated")
+                logger.info(" Leaderboard table UI updated")
                 
         except Exception as e:
-            logger.error(f"❌ Error updating leaderboard: {e}")
+            logger.error(f" Error updating leaderboard: {e}")
     
 
     
@@ -882,24 +882,24 @@ class GameManager(QThread):
         gameStarted = False
         gameRunning = False
         
-        logger.debug("🔄 Game state reset")
+        logger.debug(" Game state reset")
         trace_flags("GAME_STATE_RESET", None)
 
     def trigger_score_submission(self):
         """Trigger score submission (called when game ends)"""
-        logger.info("🎯" + "=" * 50)
-        logger.info("🎯 SCORE SUBMISSION TRIGGERED!")
-        logger.info("🎯" + "=" * 50)
-        logger.info(f"🔄 submit_score_flag before: {self.submit_score_flag}")
+        logger.info("" + "=" * 50)
+        logger.info(" SCORE SUBMISSION TRIGGERED!")
+        logger.info("" + "=" * 50)
+        logger.info(f" submit_score_flag before: {self.submit_score_flag}")
         self.submit_score_flag = True
-        logger.info(f"🔄 submit_score_flag after: {self.submit_score_flag}")
-        logger.info("🎯 GameManager should now exit monitoring and submit scores")
+        logger.info(f" submit_score_flag after: {self.submit_score_flag}")
+        logger.info(" GameManager should now exit monitoring and submit scores")
         
         trace_flags("TRIGGER_SCORE_SUBMISSION", self)
     
     def stop_manager(self):
         """Stop the game manager with comprehensive cleanup"""
-        logger.info("🛑 Stopping GameManager...")
+        logger.info(" Stopping GameManager...")
         
         try:
             # Stop the game loop
@@ -911,9 +911,9 @@ class GameManager(QThread):
                 self.start_signal.disconnect()
                 self.cancel_signal.disconnect()
                 self.submit_signal.disconnect()
-                logger.debug("✅ GameManager signals disconnected")
+                logger.debug(" GameManager signals disconnected")
             except Exception as e:
-                logger.warning(f"⚠️  Error disconnecting signals: {e}")
+                logger.warning(f"  Error disconnecting signals: {e}")
             
             # Clean up API object
             if hasattr(self, 'api') and self.api:
@@ -921,9 +921,9 @@ class GameManager(QThread):
                     # The GameAPI object doesn't have explicit cleanup,
                     # but we can clear the reference
                     self.api = None
-                    logger.debug("✅ GameAPI reference cleared")
+                    logger.debug(" GameAPI reference cleared")
                 except Exception as e:
-                    logger.warning(f"⚠️  Error cleaning API: {e}")
+                    logger.warning(f"  Error cleaning API: {e}")
             
             # Reset essential flags only
             try:
@@ -931,22 +931,22 @@ class GameManager(QThread):
                 self.submit_score_flag = False
                 self.started_flag = False
                 self.cancel_flag = False
-                logger.debug("✅ Essential flags reset")
+                logger.debug(" Essential flags reset")
             except Exception as e:
-                logger.warning(f"⚠️  Error resetting flags: {e}")
+                logger.warning(f"  Error resetting flags: {e}")
         
         except Exception as e:
-            logger.warning(f"⚠️  Error in GameManager cleanup: {e}")
+            logger.warning(f"  Error in GameManager cleanup: {e}")
         
         # Stop the thread gracefully
         try:
             self.quit()
             if not self.wait(5000):  # Wait up to 5 seconds
-                logger.warning("⚠️  GameManager thread did not finish gracefully")
+                logger.warning("  GameManager thread did not finish gracefully")
                 # Don't use terminate() unless absolutely necessary
-            logger.debug("✅ GameManager stopped successfully")
+            logger.debug(" GameManager stopped successfully")
         except Exception as e:
-            logger.warning(f"⚠️  Error stopping GameManager thread: {e}")
+            logger.warning(f"  Error stopping GameManager thread: {e}")
 
 
 class Final_Screen(QtWidgets.QMainWindow):
@@ -958,7 +958,7 @@ class Final_Screen(QtWidgets.QMainWindow):
         self.timer = None
         self.timer2 = None
         self.LeaderBoardTable = None
-        logger.debug("🏆 Final_Screen initialized")
+        logger.debug(" Final_Screen initialized")
     
     def load_custom_font(self, font_path):
         font_id = QtGui.QFontDatabase.addApplicationFont(font_path)
@@ -976,7 +976,7 @@ class Final_Screen(QtWidgets.QMainWindow):
         self.LeaderBoardTable.show()
         
         # Refresh leaderboard data before showing table
-        logger.info("📊 Final screen showing table - refreshing leaderboard data")
+        logger.info(" Final screen showing table - refreshing leaderboard data")
         self._update_leaderboard()
         
         # UpdateTable is called within _update_leaderboard, but call again as backup
@@ -1297,7 +1297,7 @@ class Final_Screen(QtWidgets.QMainWindow):
         """Update the final screen leaderboard table with current data"""
         global list_top5_FalconGrasp
         try:
-            logger.debug(f"📊 Final screen updating table with {len(list_top5_FalconGrasp)} entries")
+            logger.debug(f" Final screen updating table with {len(list_top5_FalconGrasp)} entries")
             
             # Clear all rows first
             for i in range(5):
@@ -1306,7 +1306,7 @@ class Final_Screen(QtWidgets.QMainWindow):
             
             # Sort data by score (descending)
             sorted_data = sorted(list_top5_FalconGrasp, key=lambda item: item[1], reverse=True)
-            logger.debug(f"📊 Final screen sorted leaderboard data: {sorted_data}")
+            logger.debug(f" Final screen sorted leaderboard data: {sorted_data}")
             
             # Populate table with data
             for i, (team, score) in enumerate(sorted_data):
@@ -1331,34 +1331,34 @@ class Final_Screen(QtWidgets.QMainWindow):
                 placeholder_score.setTextAlignment(QtCore.Qt.AlignCenter)
                 self.LeaderBoardTable.setItem(0, 1, placeholder_score)
                 
-            logger.debug("📊 Final screen leaderboard table updated successfully")
+            logger.debug(" Final screen leaderboard table updated successfully")
             
         except Exception as e:
-            logger.error(f"❌ Error updating final screen leaderboard table: {e}")
+            logger.error(f" Error updating final screen leaderboard table: {e}")
     
     def _update_leaderboard(self):
         """Update the leaderboard data from API for final screen"""
         try:
             global list_top5_FalconGrasp
-            logger.info("📊 Final screen fetching leaderboard for 'Falcon's Grasp'...")
+            logger.info(" Final screen fetching leaderboard for 'Falcon's Grasp'...")
             leaderboard = api.get_leaderboard("Falcon's Grasp")
-            logger.info(f"📊 Final screen leaderboard received: {leaderboard}")
+            logger.info(f" Final screen leaderboard received: {leaderboard}")
             
             list_top5_FalconGrasp.clear()
             list_top5_FalconGrasp.extend(leaderboard)
             
-            logger.info(f"📊 Final screen leaderboard updated with {len(leaderboard)} entries")
+            logger.info(f" Final screen leaderboard updated with {len(leaderboard)} entries")
             
             # Update the UI table if it exists
             if hasattr(self, 'UpdateTable'):
                 self.UpdateTable()
-                logger.info("📊 Final screen leaderboard table UI updated")
+                logger.info(" Final screen leaderboard table UI updated")
                 
         except Exception as e:
-            logger.error(f"❌ Error updating final screen leaderboard: {e}")
+            logger.error(f" Error updating final screen leaderboard: {e}")
     
     def closeEvent(self, event):
-        logger.info("🔄 Final screen closing...")
+        logger.info(" Final screen closing...")
         
         # Safely stop movie
         if hasattr(self, 'movie') and self.movie:
@@ -1366,9 +1366,9 @@ class Final_Screen(QtWidgets.QMainWindow):
                 self.movie.stop()
                 self.movie.setCacheMode(QMovie.CacheNone)
                 self.movie = None
-                logger.debug("✅ Movie cleaned up")
+                logger.debug(" Movie cleaned up")
             except Exception as e:
-                logger.warning(f"⚠️  Error stopping movie: {e}")
+                logger.warning(f"  Error stopping movie: {e}")
         
         # Safely stop timers
         if hasattr(self, 'timer') and self.timer:
@@ -1380,9 +1380,9 @@ class Final_Screen(QtWidgets.QMainWindow):
                 except:
                     pass
                 self.timer = None
-                logger.debug("✅ Timer cleaned up")
+                logger.debug(" Timer cleaned up")
             except Exception as e:
-                logger.warning(f"⚠️  Error stopping timer: {e}")
+                logger.warning(f"  Error stopping timer: {e}")
         
         if hasattr(self, 'timer2') and self.timer2:
             try:
@@ -1392,17 +1392,17 @@ class Final_Screen(QtWidgets.QMainWindow):
                 except:
                     pass
                 self.timer2 = None
-                logger.debug("✅ Timer2 cleaned up")
+                logger.debug(" Timer2 cleaned up")
             except Exception as e:
-                logger.warning(f"⚠️  Error stopping timer2: {e}")
+                logger.warning(f"  Error stopping timer2: {e}")
         
         # Safely clear background
         if hasattr(self, 'Background') and self.Background:
             try:
                 self.Background.clear()
-                logger.debug("✅ Background cleared")
+                logger.debug(" Background cleared")
             except Exception as e:
-                logger.warning(f"⚠️  Error clearing background: {e}")
+                logger.warning(f"  Error clearing background: {e}")
         
         # Clean up table widget safely
         if hasattr(self, 'LeaderBoardTable') and self.LeaderBoardTable:
@@ -1415,24 +1415,24 @@ class Final_Screen(QtWidgets.QMainWindow):
                     self.LeaderBoardTable.close()
                     # Don't call deleteLater() - let Qt handle it automatically
                     self.LeaderBoardTable = None
-                    logger.debug("✅ Table widget cleaned up")
+                    logger.debug(" Table widget cleaned up")
                 except RuntimeError:
                     # Table widget already deleted by Qt
                     self.LeaderBoardTable = None
-                    logger.debug("✅ Table widget was already deleted by Qt")
+                    logger.debug(" Table widget was already deleted by Qt")
             except Exception as e:
-                logger.warning(f"⚠️  Error cleaning table widget: {e}")
+                logger.warning(f"  Error cleaning table widget: {e}")
                 self.LeaderBoardTable = None
         
         # Don't manually clean up child widgets - let Qt handle cleanup automatically
         if hasattr(self, 'centralwidget'):
             self.centralwidget = None
-            logger.debug("✅ Central widget reference cleared")
+            logger.debug(" Central widget reference cleared")
         
         try:
-            logger.debug("✅ Final screen closed successfully")
+            logger.debug(" Final screen closed successfully")
         except Exception as e:
-            logger.warning(f"⚠️  Error closing final screen: {e}")
+            logger.warning(f"  Error closing final screen: {e}")
         
         event.accept()
         super().closeEvent(event)
@@ -1447,7 +1447,7 @@ class TeamMember_screen(QtWidgets.QMainWindow):
         self.LeaderboardTable = None
         if multimedia_available:
             self.player = QMediaPlayer()
-        logger.debug("🏠 Home_screen initialized")
+        logger.debug(" Home_screen initialized")
     
     def load_custom_font(self, font_path):
         font_id = QtGui.QFontDatabase.addApplicationFont(font_path)
@@ -1701,16 +1701,16 @@ class TeamMember_screen(QtWidgets.QMainWindow):
             self.UpdateTable()
             # Initially hide table - it will be shown by Inactive() after 13 seconds
             # self.LeaderboardTable.hide()
-            logger.debug("✅ Home_screen setup completed")
+            logger.debug(" Home_screen setup completed")
             
         except Exception as e:
-            logger.error(f"❌ Error setting up Home_screen: {e}")
+            logger.error(f" Error setting up Home_screen: {e}")
     
     def UpdateTable(self):
         """Update the leaderboard table with current data"""
         try:
             global list_players_name
-            logger.debug(f"📊 Updating table with {len(list_players_name)} entries")
+            logger.debug(f" Updating table with {len(list_players_name)} entries")
             
             # Clear all rows first
             for i in range(5):
@@ -1718,7 +1718,7 @@ class TeamMember_screen(QtWidgets.QMainWindow):
             
             # Sort data by score (descending)
             sorted_data = sorted(list_players_name, key=lambda item: item[1], reverse=True)
-            logger.debug(f"📊 Sorted leaderboard data: {sorted_data}")
+            logger.debug(f" Sorted leaderboard data: {sorted_data}")
             
             # Populate table with data
             for i, (player_name) in enumerate(sorted_data):
@@ -1744,14 +1744,14 @@ class TeamMember_screen(QtWidgets.QMainWindow):
                 # self.LeaderboardTable.setItem(0, 1, placeholder_score)
                 
         except Exception as e:
-            logger.error(f"❌ Error updating leaderboard table: {e}")
+            logger.error(f" Error updating leaderboard table: {e}")
     
     
     
     def Inactive(self):
         """Switch to inactive state with inActive GIF and show table (same as CatchTheStick.py)"""
         try:
-            logger.info("🔄 Home screen switching to Inactive state")
+            logger.info(" Home screen switching to Inactive state")
             
             # Stop the timer2 if it exists
             if hasattr(self, 'timer2') and self.timer2 is not None:
@@ -1782,13 +1782,13 @@ class TeamMember_screen(QtWidgets.QMainWindow):
             global homeOpened
             homeOpened = True
             
-            logger.info("✅ Home screen switched to Inactive state successfully")
+            logger.info(" Home screen switched to Inactive state successfully")
             
         except Exception as e:
-            logger.error(f"❌ Error switching to Inactive state 2: {e}")
+            logger.error(f" Error switching to Inactive state 2: {e}")
     
     def closeEvent(self, event):
-        logger.info("🔄 Home screen closing...")
+        logger.info(" Home screen closing...")
         
         # Stop timer2 if it exists
         if hasattr(self, 'timer2') and self.timer2:
@@ -1799,22 +1799,22 @@ class TeamMember_screen(QtWidgets.QMainWindow):
                 except:
                     pass
                 self.timer2 = None
-                logger.debug("✅ Timer2 cleaned up")
+                logger.debug(" Timer2 cleaned up")
             except Exception as e:
-                logger.warning(f"⚠️  Error stopping timer2: {e}")
+                logger.warning(f"  Error stopping timer2: {e}")
         
         if hasattr(self, 'movie') and self.movie:
             try:
                 self.movie.stop()
                 self.movie = None
             except Exception as e:
-                logger.warning(f"⚠️  Error stopping movie: {e}")
+                logger.warning(f"  Error stopping movie: {e}")
         if hasattr(self, 'player') and self.player:
             try:
                 self.player.stop()
                 self.player = None
             except Exception as e:
-                logger.warning(f"⚠️  Error stopping player: {e}")
+                logger.warning(f"  Error stopping player: {e}")
         event.accept()
         super().closeEvent(event)
 
@@ -1830,7 +1830,7 @@ class Home_screen(QtWidgets.QMainWindow):
         self.LeaderboardTable = None
         if multimedia_available:
             self.player = QMediaPlayer()
-        logger.debug("🏠 Home_screen initialized")
+        logger.debug(" Home_screen initialized")
     
     def load_custom_font(self, font_path):
         font_id = QtGui.QFontDatabase.addApplicationFont(font_path)
@@ -2091,15 +2091,15 @@ class Home_screen(QtWidgets.QMainWindow):
             self.UpdateTable()
             # Initially hide table - it will be shown by Inactive() after 13 seconds
             self.LeaderboardTable.hide()
-            logger.debug("✅ Home_screen setup completed")
+            logger.debug(" Home_screen setup completed")
             
         except Exception as e:
-            logger.error(f"❌ Error setting up Home_screen: {e}")
+            logger.error(f" Error setting up Home_screen: {e}")
     
     def Inactive(self):
         """Switch to inactive state with inActive GIF and show table (same as CatchTheStick.py)"""
         try:
-            logger.info("🔄 Home screen switching to Inactive state")
+            logger.info(" Home screen switching to Inactive state")
             # check if self is deleted
              # Set global homeOpened flag (same as CatchTheStick.py)
             global homeOpened
@@ -2135,14 +2135,14 @@ class Home_screen(QtWidgets.QMainWindow):
 
             
             
-            logger.info("✅ Home screen switched to Inactive state successfully")
+            logger.info(" Home screen switched to Inactive state successfully")
 
             if hasattr(self, 'timer3') and self.timer3 is not None:
                 self.timer3.start(9000)
                 logger.info("⏰ Home screen timer3 set for 9 second to switch to Inactive state")
             
         except Exception as e:
-            logger.error(f"❌ Error switching to Inactive state: {e}")
+            logger.error(f" Error switching to Inactive state: {e}")
     
     def looping(self):
         # Safe timer stop
@@ -2189,7 +2189,7 @@ class Home_screen(QtWidgets.QMainWindow):
         """Update the leaderboard table with current data"""
         try:
             global list_top5_FalconGrasp
-            logger.debug(f"📊 Updating table with {len(list_top5_FalconGrasp)} entries")
+            logger.debug(f" Updating table with {len(list_top5_FalconGrasp)} entries")
             
             # Clear all rows first
             for i in range(5):
@@ -2199,7 +2199,7 @@ class Home_screen(QtWidgets.QMainWindow):
             
             # Sort data by score (descending)
             sorted_data = sorted(list_top5_FalconGrasp, key=lambda item: item[1], reverse=True)
-            logger.debug(f"📊 Sorted leaderboard data: {sorted_data}")
+            logger.debug(f" Sorted leaderboard data: {sorted_data}")
             
             # Populate table with data
             for i, (team, score) in enumerate(sorted_data):
@@ -2227,32 +2227,32 @@ class Home_screen(QtWidgets.QMainWindow):
                 self.LeaderboardTable.setItem(0, 1, placeholder_score)
                 
         except Exception as e:
-            logger.error(f"❌ Error updating leaderboard table: {e}")
+            logger.error(f" Error updating leaderboard table: {e}")
     
     def _update_leaderboard(self):
         """Update the leaderboard data from API"""
         try:
             global list_top5_FalconGrasp
-            logger.info("📊 Fetching leaderboard for 'Falcon's Grasp'...")
+            logger.info(" Fetching leaderboard for 'Falcon's Grasp'...")
             leaderboard = api.get_leaderboard("Falcon's Grasp")
-            logger.info(f"📊 Leaderboard received: {leaderboard}")
+            logger.info(f" Leaderboard received: {leaderboard}")
             
             list_top5_FalconGrasp.clear()
             list_top5_FalconGrasp.extend(leaderboard)
             
-            logger.info(f"📊 Leaderboard updated with {len(leaderboard)} entries")
+            logger.info(f" Leaderboard updated with {len(leaderboard)} entries")
             
             # Update the UI table if it exists
             if hasattr(self, 'UpdateTable'):
                 self.UpdateTable()
-                logger.info("📊 Leaderboard table UI updated")
+                logger.info(" Leaderboard table UI updated")
                 
         except Exception as e:
-            logger.error(f"❌ Error updating leaderboard: {e}")
+            logger.error(f" Error updating leaderboard: {e}")
     
     
     def closeEvent(self, event):
-        logger.info("🔄 Home screen closing...")
+        logger.info(" Home screen closing...")
         
         # Stop timer2 if it exists
         if hasattr(self, 'timer2') and self.timer2:
@@ -2263,27 +2263,27 @@ class Home_screen(QtWidgets.QMainWindow):
                 except:
                     pass
                 self.timer2 = None
-                logger.debug("✅ Timer2 cleaned up")
+                logger.debug(" Timer2 cleaned up")
             except Exception as e:
-                logger.warning(f"⚠️  Error stopping timer2: {e}")
+                logger.warning(f"  Error stopping timer2: {e}")
         
         if hasattr(self, 'movie') and self.movie:
             try:
                 self.movie.stop()
                 self.movie = None
             except Exception as e:
-                logger.warning(f"⚠️  Error stopping movie: {e}")
+                logger.warning(f"  Error stopping movie: {e}")
         if hasattr(self, 'Background') and self.Background:
             try:
                 self.Background.setMovie(None)
             except Exception as e:
-                logger.warning(f"⚠️  Error stopping Background: {e}")
+                logger.warning(f"  Error stopping Background: {e}")
         if hasattr(self, 'player') and self.player:
             try:
                 self.player.stop()
                 self.player = None
             except Exception as e:
-                logger.warning(f"⚠️  Error stopping player: {e}")
+                logger.warning(f"  Error stopping player: {e}")
         event.accept()
         super().closeEvent(event)
 
@@ -2293,13 +2293,13 @@ class Active_screen(QWidget):
     
     def __init__(self):
         super().__init__()
-        logger.info("🔧 Initializing Active_screen with MQTT thread...")
+        logger.info(" Initializing Active_screen with MQTT thread...")
         
         self.mqtt_thread = MqttThread('localhost')
         # self.mqtt_thread.start_signal.connect(self.start_game)
         # self.mqtt_thread.stop_signal.connect(self.stop_game)
         # self.mqtt_thread.restart_signal.connect(self.restart_game)
-        # self.mqtt_thread.activate_signal.connect(lambda: logger.info("🔋 Game activated"))
+        # self.mqtt_thread.activate_signal.connect(lambda: logger.info(" Game activated"))
         self.mqtt_thread.deactivate_signal.connect(self.deactivate)
         self.mqtt_thread.message_signal.connect(lambda data: self.ReceiveData(data))
         self.mqtt_thread.start()
@@ -2307,7 +2307,7 @@ class Active_screen(QWidget):
         # Simple check without complex retry logic
         mqtt_ready = self._ensure_mqtt_ready()
         if mqtt_ready:
-            logger.info("✅ Active_screen MQTT thread initialized successfully")
+            logger.info(" Active_screen MQTT thread initialized successfully")
         else:
             logger.info("ℹ️  MQTT thread will connect when needed")
         
@@ -2331,7 +2331,7 @@ class Active_screen(QWidget):
                         self.mqtt_thread.client and 
                         hasattr(self.mqtt_thread, 'connected') and 
                         self.mqtt_thread.connected):
-                        logger.debug("✅ MQTT thread ready and connected")
+                        logger.debug(" MQTT thread ready and connected")
                         return True
                     
                     time.sleep(wait_interval)
@@ -2359,12 +2359,12 @@ class Active_screen(QWidget):
         try:
             # Check if player is available
             if not multimedia_available or not hasattr(self, 'player') or not self.player:
-                logger.warning("⚠️  Media player not available, skipping audio playback")
+                logger.warning("  Media player not available, skipping audio playback")
                 return
                 
             audio_file = "Assets/mp3/2066.wav"
             absolute_path = os.path.abspath(audio_file)
-            logger.debug(f"🎵 Playing audio: {absolute_path}")
+            logger.debug(f" Playing audio: {absolute_path}")
             
             # Safely set media and play
             self.player.setMedia(QMediaContent(QtCore.QUrl.fromLocalFile(absolute_path)))
@@ -2379,7 +2379,7 @@ class Active_screen(QWidget):
                 pass
                 
         except Exception as e:
-            logger.error(f"❌ Error playing audio: {e}")
+            logger.error(f" Error playing audio: {e}")
             # Don't let audio errors crash the game
     
     def check_media_status(self, status):
@@ -2390,9 +2390,9 @@ class Active_screen(QWidget):
                     if hasattr(self, 'player') and self.player:
                         self.player.stop()
                     else:
-                        logger.debug("⚠️  Player not available during media status check")
+                        logger.debug("  Player not available during media status check")
         except Exception as e:
-            logger.warning(f"⚠️  Error in media status check: {e}")
+            logger.warning(f"  Error in media status check: {e}")
     
     def ReceiveData(self, data):
         """Process FalconGrasp detection data from MQTT"""
@@ -2419,17 +2419,17 @@ class Active_screen(QWidget):
                                 item.setText(str(score))
                                 self.tableWidget_2.setItem(index, 1, item)
                                 
-                            logger.debug(f"📊 Updated Player {index+1} score: {score}")
+                            logger.debug(f" Updated Player {index+1} score: {score}")
                         else:
-                            logger.warning(f"⚠️  Invalid player index: {index}")
+                            logger.warning(f"  Invalid player index: {index}")
                     except (ValueError, IndexError) as e:
-                        logger.warning(f"⚠️  Error parsing camera topic {topic}: {e}")
+                        logger.warning(f"  Error parsing camera topic {topic}: {e}")
             
             # Handle team name topic
             elif topic.endswith("/TeamName/Pub"):
                 global teamName
                 teamName = message
-                logger.debug(f"📝 Team name updated: {teamName}")
+                logger.debug(f" Team name updated: {teamName}")
                 
                 # Update team name label if it exists
                 if hasattr(self, 'label') and self.label:
@@ -2440,30 +2440,30 @@ class Active_screen(QWidget):
                 try:
                     global scored
                     scored = int(message)
-                    logger.debug(f"📊 Total score updated: {scored}")
+                    logger.debug(f" Total score updated: {scored}")
                 except ValueError as e:
-                    logger.warning(f"⚠️  Invalid total score format: {message} - {e}")
+                    logger.warning(f"  Invalid total score format: {message} - {e}")
             
             else:
-                logger.debug(f"🔍 Ignoring unhandled topic: {topic}")
+                logger.debug(f" Ignoring unhandled topic: {topic}")
                 
         except Exception as e:
-            logger.warning(f"⚠️  Error processing data: {e}")
+            logger.warning(f"  Error processing data: {e}")
     
     def restart_game(self):
         """Restart game with timer management"""
         global gameRunning
         try:
-            logger.debug("🔄 Restarting FalconGrasp game...")
+            logger.debug(" Restarting FalconGrasp game...")
             
             gameRunning = False  # Reset flag to allow restart
             
             # Call start_game to properly restart
             self.start_game()
             
-            logger.debug("✅ Game restarted successfully")
+            logger.debug(" Game restarted successfully")
         except Exception as e:
-            logger.warning(f"⚠️  Error restarting game: {e}")
+            logger.warning(f"  Error restarting game: {e}")
             gameRunning = False  # Reset flag on error
     
     def start_game_timer(self, duration_ms):
@@ -2482,7 +2482,7 @@ class Active_screen(QWidget):
             logger.debug(f"⏰ Game timer started: {duration_ms}ms")
             
         except Exception as e:
-            logger.warning(f"⚠️  Error starting game timer: {e}")
+            logger.warning(f"  Error starting game timer: {e}")
     
     def update_timer_display(self):
         """Update timer display every second"""
@@ -2504,9 +2504,9 @@ class Active_screen(QWidget):
                 # This will calculate final score, save to CSV, play audio, and trigger deactivation
                 self.stop_game()
                 
-                logger.info("✅ Game timer finished - stop sequence completed")
+                logger.info(" Game timer finished - stop sequence completed")
         except Exception as e:
-            logger.warning(f"⚠️  Error updating timer: {e}")
+            logger.warning(f"  Error updating timer: {e}")
             gameRunning = False  # Reset flag on error
     
     @pyqtSlot()
@@ -2516,23 +2516,23 @@ class Active_screen(QWidget):
         
         # Check if UI is properly initialized
         if not hasattr(self, 'TimerGame'):
-            logger.warning("⚠️  Game UI not yet initialized, cannot start game")
+            logger.warning("  Game UI not yet initialized, cannot start game")
             return
         
         # Prevent recursive calls
         if gameRunning:
-            logger.debug("🔄 Game is already running, skipping start_game call")
+            logger.debug(" Game is already running, skipping start_game call")
             return
             
         gameStarted = True
         gameRunning = True
         
         try:
-            logger.info("🚀 Starting FalconGrasp game...")
+            logger.info("Starting FalconGrasp game...")
             
             # Publish MQTT game start message
             self._safe_mqtt_publish("FalconGrasp/game/start", "start")
-            logger.info("📡 Published MQTT game start message")
+            logger.info(" Published MQTT game start message")
             
             # Reset player scores
             list_players_score = [0,0,0,0]
@@ -2555,12 +2555,12 @@ class Active_screen(QWidget):
             # Start display timer
             self.start_game_timer(TimerValue)
             
-            logger.info("🎮 Game timers started successfully")
+            logger.info(" Game timers started successfully")
             print("start")
             self.play_audio()
             
         except Exception as e:
-            logger.error(f"❌ Error starting game timers: {e}")
+            logger.error(f" Error starting game timers: {e}")
             gameRunning = False  # Reset flag on error
     
     @pyqtSlot()
@@ -2570,7 +2570,7 @@ class Active_screen(QWidget):
         
         # Check if UI is properly initialized
         if not hasattr(self, 'TimerGame'):
-            logger.warning("⚠️  Game UI not yet initialized, cannot stop game")
+            logger.warning("  Game UI not yet initialized, cannot stop game")
             return
             
         try:
@@ -2580,19 +2580,19 @@ class Active_screen(QWidget):
             
             # Publish MQTT game stop message
             self._safe_mqtt_publish("FalconGrasp/game/stop", "stop")
-            logger.info("📡 Published MQTT game stop message")
+            logger.info(" Published MQTT game stop message")
             
             # Stop timers
             if hasattr(self, 'TimerGame') and self.TimerGame:
                 self.TimerGame.stop()
             
-            logger.info("🛑 Game timers stopped successfully")
+            logger.info(" Game timers stopped successfully")
             
             # Unsubscribe from data topics when game stops (same as CageGame)
             if hasattr(self, 'mqtt_thread') and self.mqtt_thread:
                 if hasattr(self.mqtt_thread, 'unsubscribe_from_data_topics'):
                     self.mqtt_thread.unsubscribe_from_data_topics()
-                    logger.info("📡 Unsubscribed from data topics - no more sensor data")
+                    logger.info(" Unsubscribed from data topics - no more sensor data")
                 else:
                     logger.debug("ℹ️  MQTT unsubscribe method not available")
             else:
@@ -2600,7 +2600,7 @@ class Active_screen(QWidget):
             
             self.save_final_score_to_csv(teamName, scored)
         except Exception as e:
-            logger.error(f"❌ Error stopping game: {e}")
+            logger.error(f" Error stopping game: {e}")
 
         self.play_audio()
         gameStarted = False
@@ -2624,13 +2624,13 @@ class Active_screen(QWidget):
                     hasattr(self.mqtt_thread, 'connected') and 
                     self.mqtt_thread.connected):
                     self.mqtt_thread.client.publish(topic, message)
-                    logger.debug(f"📡 MQTT message published: {topic} = {message}")
+                    logger.debug(f" MQTT message published: {topic} = {message}")
                 else:
-                    logger.warning(f"⚠️  MQTT client not connected, cannot publish: {topic}")
+                    logger.warning(f"  MQTT client not connected, cannot publish: {topic}")
             else:
-                logger.warning(f"⚠️  MQTT thread not available, cannot publish: {topic}")
+                logger.warning(f"  MQTT thread not available, cannot publish: {topic}")
         except Exception as e:
-            logger.error(f"❌ Error publishing MQTT message {topic}: {e}")
+            logger.error(f" Error publishing MQTT message {topic}: {e}")
 
 
 
@@ -2641,11 +2641,11 @@ class Active_screen(QWidget):
         """Cancel game and stop timers (same logic as CatchTheStick.py)"""
         global gameRunning
         try:
-            logger.info("🚫 Cancelling FalconGrasp game...")
+            logger.info(" Cancelling FalconGrasp game...")
             
             # Publish MQTT game stop message for cancellation
             self._safe_mqtt_publish("FalconGrasp/game/stop", "stop")
-            logger.info("📡 Published MQTT game stop message for cancellation")
+            logger.info(" Published MQTT game stop message for cancellation")
             
             gameRunning = False  # Reset game running flag
             
@@ -2656,16 +2656,16 @@ class Active_screen(QWidget):
             if hasattr(self, 'mqtt_thread') and self.mqtt_thread:
                 if hasattr(self.mqtt_thread, 'unsubscribe_from_data_topics'):
                     self.mqtt_thread.unsubscribe_from_data_topics()
-                    logger.info("📡 Unsubscribed from data topics after cancellation")
+                    logger.info(" Unsubscribed from data topics after cancellation")
                 else:
                     logger.debug("ℹ️  MQTT unsubscribe method not available")
             else:
                 logger.debug("ℹ️  MQTT thread not available for unsubscription")
             
-            logger.info("✅ FalconGrasp game cancelled successfully")
+            logger.info(" FalconGrasp game cancelled successfully")
             
         except Exception as e:
-            logger.error(f"❌ Error cancelling game: {e}")
+            logger.error(f" Error cancelling game: {e}")
             gameRunning = False  # Reset flag on error
     
     @pyqtSlot()
@@ -2673,7 +2673,7 @@ class Active_screen(QWidget):
         """Handle deactivate signal - trigger score submission only once like CageGame"""
         global gameRunning
         try:
-            logger.info("🔄 Deactivating FalconGrasp game...")
+            logger.info(" Deactivating FalconGrasp game...")
             
             gameRunning = False  # Reset game running flag
             
@@ -2681,16 +2681,16 @@ class Active_screen(QWidget):
             # This prevents MQTT loop and ensures single submission like CageGame
             if hasattr(self, 'game_manager_ref') and self.game_manager_ref:
                 if not self.game_manager_ref.submit_score_flag:
-                    logger.info("🎯 Triggering score submission via deactivate (single trigger)")
+                    logger.info(" Triggering score submission via deactivate (single trigger)")
                     self.game_manager_ref.trigger_score_submission()
-                    logger.info("✅ FalconGrasp deactivate signal sent")
+                    logger.info(" FalconGrasp deactivate signal sent")
                 else:
                     logger.info("ℹ️  Score submission already triggered, skipping duplicate")
             else:
-                logger.warning("⚠️  No GameManager reference for deactivation")
+                logger.warning("  No GameManager reference for deactivation")
             
         except Exception as e:
-            logger.error(f"❌ Error in deactivate: {e}")
+            logger.error(f" Error in deactivate: {e}")
             gameRunning = False  # Reset flag on error
     
     def save_final_score_to_csv(self, team_name, final_score):
@@ -2709,10 +2709,10 @@ class Active_screen(QWidget):
                 writer = csv.writer(file)
                 writer.writerow(row_data)
                 
-            logger.info(f"📝 Score saved to CSV: {team_name} - {final_score}")
+            logger.info(f" Score saved to CSV: {team_name} - {final_score}")
             
         except Exception as e:
-            logger.error(f"❌ Error saving score to CSV: {e}")
+            logger.error(f" Error saving score to CSV: {e}")
     
     def setupUi(self, MainWindow):
         """Setup Active screen UI with FalconGrasp styling"""
@@ -3030,10 +3030,10 @@ class Active_screen(QWidget):
             self.gridLayout.addWidget(self.tableWidget_2, 0, 0, 1, 1)
             MainWindow.setCentralWidget(self.centralwidget)
             
-            logger.debug("✅ Active_screen setup completed")
+            logger.debug(" Active_screen setup completed")
             
         except Exception as e:
-            logger.error(f"❌ Error setting up Active_screen: {e}")
+            logger.error(f" Error setting up Active_screen: {e}")
     
     def set_lcd(self, value):
         """Set LCD display values"""
@@ -3054,7 +3054,7 @@ class Active_screen(QWidget):
             if hasattr(self, 'lcdNumber_4'):
                 self.lcdNumber_4.display(sec_ones)
         except Exception as e:
-            logger.warning(f"⚠️  Error setting LCD: {e}")
+            logger.warning(f"  Error setting LCD: {e}")
     
     def closeEvent(self, event):
         # Prevent double cleanup
@@ -3064,7 +3064,7 @@ class Active_screen(QWidget):
         self._is_closing = True
         
         print("close in active screen")
-        logger.info("🔄 Active screen closing...")
+        logger.info(" Active screen closing...")
         
         # Stop MediaPlayer but keep it available for reuse (like MQTT thread)
         if hasattr(self, 'player') and self.player:
@@ -3072,9 +3072,9 @@ class Active_screen(QWidget):
                 self.player.stop()
                 if multimedia_available:
                     self.player.setMedia(QMediaContent())  # Clear media
-                logger.debug("✅ MediaPlayer stopped and cleared (kept for reuse)")
+                logger.debug(" MediaPlayer stopped and cleared (kept for reuse)")
             except Exception as e:
-                logger.warning(f"⚠️  Error stopping media player: {e}")
+                logger.warning(f"  Error stopping media player: {e}")
         
         # Safely stop movie
         if hasattr(self, 'movie') and self.movie:
@@ -3082,9 +3082,9 @@ class Active_screen(QWidget):
                 self.movie.stop()
                 self.movie.setCacheMode(QMovie.CacheNone)
                 self.movie = None
-                logger.debug("✅ Movie cleaned up")
+                logger.debug(" Movie cleaned up")
             except Exception as e:
-                logger.warning(f"⚠️  Error stopping movie: {e}")
+                logger.warning(f"  Error stopping movie: {e}")
         
         # Stop MQTT thread but keep it available for reuse
         if hasattr(self, 'mqtt_thread') and self.mqtt_thread:
@@ -3092,11 +3092,11 @@ class Active_screen(QWidget):
                 # Just unsubscribe from data topics, but keep the connection
                 if hasattr(self.mqtt_thread, 'unsubscribe_from_data_topics'):
                     self.mqtt_thread.unsubscribe_from_data_topics()
-                    logger.debug("✅ MQTT unsubscribed from data topics")
+                    logger.debug(" MQTT unsubscribed from data topics")
                 else:
                     logger.debug("ℹ️  MQTT thread will remain connected for reuse")
             except Exception as e:
-                logger.warning(f"⚠️  Error unsubscribing MQTT: {e}")
+                logger.warning(f"  Error unsubscribing MQTT: {e}")
         
         # Reset global game state
         global gameStarted
@@ -3107,9 +3107,9 @@ class Active_screen(QWidget):
             try:
                 self.TimerGame.stop()
                 self.TimerGame = None
-                logger.debug("✅ Game timer cleaned up")
+                logger.debug(" Game timer cleaned up")
             except Exception as e:
-                logger.warning(f"⚠️  Error stopping game timer: {e}")
+                logger.warning(f"  Error stopping game timer: {e}")
         
         # Clean up table widget safely
         if hasattr(self, 'tableWidget_2') and self.tableWidget_2:
@@ -3122,13 +3122,13 @@ class Active_screen(QWidget):
                     self.tableWidget_2.close()
                     # Don't call deleteLater() - let Qt handle it automatically
                     self.tableWidget_2 = None
-                    logger.debug("✅ Table widget cleaned up")
+                    logger.debug(" Table widget cleaned up")
                 except RuntimeError:
                     # Table widget already deleted by Qt
                     self.tableWidget_2 = None
-                    logger.debug("✅ Table widget was already deleted by Qt")
+                    logger.debug(" Table widget was already deleted by Qt")
             except Exception as e:
-                logger.warning(f"⚠️  Error cleaning table widget: {e}")
+                logger.warning(f"  Error cleaning table widget: {e}")
                 self.tableWidget_2 = None
         
         # Safely clear UI widgets
@@ -3139,21 +3139,21 @@ class Active_screen(QWidget):
                     self.Background.objectName()  # Test if object is still valid
                     self.Background.clear()
                     self.Background = None
-                    logger.debug("✅ Background cleared")
+                    logger.debug(" Background cleared")
                 except RuntimeError:
                     # Background already deleted by Qt
                     self.Background = None
-                    logger.debug("✅ Background was already deleted by Qt")
+                    logger.debug(" Background was already deleted by Qt")
             except Exception as e:
-                logger.warning(f"⚠️  Error clearing background: {e}")
+                logger.warning(f"  Error clearing background: {e}")
         
         # Don't manually clean up child widgets - let Qt handle cleanup automatically
         if hasattr(self, 'centralwidget'):
             self.centralwidget = None
-            logger.debug("✅ Central widget reference cleared")
+            logger.debug(" Central widget reference cleared")
         
         event.accept()
-        logger.info("✅ Active screen closed successfully with complete cleanup")
+        logger.info(" Active screen closed successfully with complete cleanup")
         super().closeEvent(event)
 
 
@@ -3162,7 +3162,7 @@ class MainApp(QtWidgets.QMainWindow):
     
     def __init__(self):
         super().__init__()
-        logger.info("🚀 MainApp initializing with complete UI and new API...")
+        logger.info("MainApp initializing with complete UI and new API...")
         
         # Setup window
         self.sized = QtWidgets.QDesktopWidget().screenGeometry()
@@ -3181,15 +3181,15 @@ class MainApp(QtWidgets.QMainWindow):
         # Initialize GameManager with new API
         try:
             self.game_manager = GameManager()
-            logger.info("✅ GameManager initialized with new API")
+            logger.info(" GameManager initialized with new API")
             
             # CRITICAL: Store reference to game_manager in Active_screen for backup score submission (like CageGame)
             if hasattr(self, 'ui_active') and self.ui_active:
                 self.ui_active.game_manager_ref = self.game_manager
-                logger.debug("✅ GameManager reference stored in Active_screen")
+                logger.debug(" GameManager reference stored in Active_screen")
                 
         except Exception as e:
-            logger.error(f"❌ Failed to initialize GameManager: {e}")
+            logger.error(f" Failed to initialize GameManager: {e}")
             raise
             
         # Connection signals for the game manager Documentation
@@ -3212,7 +3212,7 @@ class MainApp(QtWidgets.QMainWindow):
                 self.game_manager.trigger_score_submission
             )
         else:
-            logger.warning("⚠️  MQTT thread not properly initialized for deactivate signal")
+            logger.warning("  MQTT thread not properly initialized for deactivate signal")
         
         # Start with home screen
         self.start_Home_screen()
@@ -3231,19 +3231,19 @@ class MainApp(QtWidgets.QMainWindow):
         QtCore.QTimer.singleShot(15000, self.game_manager.start)
         
         self.mainWindow.showFullScreen()
-        logger.info("✅ MainApp initialization complete")
-        logger.info("🎉 FalconGrasp application started successfully!")
+        logger.info(" MainApp initialization complete")
+        logger.info(" FalconGrasp application started successfully!")
 
     def start_TeamMember_screen(self):
         self._cleanup_previous_screens()
 
-        logger.info("👥 Starting Team Member Screen")
+        logger.info(" Starting Team Member Screen")
         self.ui_team_member.setupUi(self.mainWindow)
-        logger.info("✅ Team Member screen initialized successfully")
+        logger.info(" Team Member screen initialized successfully")
 
     def _cleanup_previous_screens(self):
         """Safely cleanup any previous screen resources"""
-        logger.info("🧹 Cleaning up previous screens...")
+        logger.info(" Cleaning up previous screens...")
         
         # Clean up active screen
         if hasattr(self, 'ui_active') and self.ui_active:
@@ -3255,7 +3255,7 @@ class MainApp(QtWidgets.QMainWindow):
                     self.ui_active.TimerGame.stop()
                 # Don't close video here as it might be needed
             except Exception as e:
-                logger.warning(f"⚠️  Error cleaning up active screen: {e}")
+                logger.warning(f"  Error cleaning up active screen: {e}")
         
         # Clean up final screen
         if hasattr(self, 'ui_final') and self.ui_final:
@@ -3265,7 +3265,7 @@ class MainApp(QtWidgets.QMainWindow):
                 if hasattr(self.ui_final, 'timer2') and self.ui_final.timer2:
                     self.ui_final.timer2.stop()
             except Exception as e:
-                logger.warning(f"⚠️  Error cleaning up final screen: {e}")
+                logger.warning(f"  Error cleaning up final screen: {e}")
         
         # Clean up home screen
         if hasattr(self, 'ui_home') and self.ui_home:
@@ -3275,9 +3275,9 @@ class MainApp(QtWidgets.QMainWindow):
                 if hasattr(self.ui_home, 'timer2') and self.ui_home.timer2:
                     self.ui_home.timer2.stop()
             except Exception as e:
-                logger.warning(f"⚠️  Error cleaning up home screen: {e}")
+                logger.warning(f"  Error cleaning up home screen: {e}")
         
-        logger.info("✅ Previous screens cleaned up")
+        logger.info(" Previous screens cleaned up")
 
     def _safe_mqtt_publish(self, topic, message):
         """Safely publish MQTT message with proper error handling"""
@@ -3289,28 +3289,28 @@ class MainApp(QtWidgets.QMainWindow):
                         hasattr(self.ui_active.mqtt_thread, 'connected') and 
                         self.ui_active.mqtt_thread.connected):
                         self.ui_active.mqtt_thread.client.publish(topic, message)
-                        logger.debug(f"📡 MQTT message published: {topic} = {message}")
+                        logger.debug(f" MQTT message published: {topic} = {message}")
                     else:
-                        logger.warning(f"⚠️  MQTT client not connected, cannot publish: {topic}")
+                        logger.warning(f"  MQTT client not connected, cannot publish: {topic}")
                 else:
-                    logger.warning(f"⚠️  MQTT thread not available, cannot publish: {topic}")
+                    logger.warning(f"  MQTT thread not available, cannot publish: {topic}")
             else:
-                logger.warning(f"⚠️  Active screen not available, cannot publish: {topic}")
+                logger.warning(f"  Active screen not available, cannot publish: {topic}")
         except Exception as e:
-            logger.error(f"❌ Error publishing MQTT message {topic}: {e}")
+            logger.error(f" Error publishing MQTT message {topic}: {e}")
 
     def _handle_game_cancellation(self):
         """Robust handler for game cancellation that works regardless of current screen state"""
-        logger.warning("🚫" + "=" * 50)
-        logger.warning("🚫 GAME CANCELLATION DETECTED")
-        logger.warning("🚫" + "=" * 50)
+        logger.warning("" + "=" * 50)
+        logger.warning(" GAME CANCELLATION DETECTED")
+        logger.warning("" + "=" * 50)
         
         # Publish MQTT game stop message for cancellation
         try:
             self._safe_mqtt_publish("FalconGrasp/game/stop", "stop")
-            logger.info("📡 Published MQTT game stop message for cancellation")
+            logger.info(" Published MQTT game stop message for cancellation")
         except Exception as e:
-            logger.warning(f"⚠️  Error publishing MQTT stop message: {e}")
+            logger.warning(f"  Error publishing MQTT stop message: {e}")
         
         try:
             # Safely cleanup active screen components
@@ -3318,36 +3318,36 @@ class MainApp(QtWidgets.QMainWindow):
                 try:
                     if hasattr(self.ui_active, 'TimerGame') and self.ui_active.TimerGame:
                         self.ui_active.TimerGame.stop()
-                        logger.debug("🛑 TimerGame stopped")
+                        logger.debug(" TimerGame stopped")
                 except Exception as e:
-                    logger.warning(f"⚠️  Error stopping TimerGame: {e}")
+                    logger.warning(f"  Error stopping TimerGame: {e}")
                 
                 try:
                     if hasattr(self.ui_active, 'mqtt_thread') and self.ui_active.mqtt_thread:
                         self.ui_active.mqtt_thread.unsubscribe_from_data_topics()
-                        logger.debug("🛑 MQTT unsubscribed")
+                        logger.debug(" MQTT unsubscribed")
                 except Exception as e:
-                    logger.warning(f"⚠️  Error unsubscribing MQTT: {e}")
+                    logger.warning(f"  Error unsubscribing MQTT: {e}")
                 
                 try:
                     # Check if ui_active is still valid before closing
                     try:
                         self.ui_active.objectName()  # Test if object is still valid
                         self.ui_active.close()
-                        logger.debug("🛑 Active screen closed")
+                        logger.debug(" Active screen closed")
                     except RuntimeError:
-                        logger.debug("🛑 Active screen was already deleted by Qt")
+                        logger.debug(" Active screen was already deleted by Qt")
                 except Exception as e:
-                    logger.warning(f"⚠️  Error closing active screen: {e}")
+                    logger.warning(f"  Error closing active screen: {e}")
                 
                 # CRITICAL: Reset the Active_screen state instead of recreating it
                 try:
-                    logger.info("🔄 Resetting Active_screen state after cancellation...")
+                    logger.info(" Resetting Active_screen state after cancellation...")
                     self._reset_active_screen_state()
-                    logger.info("✅ Active_screen state reset successfully")
+                    logger.info(" Active_screen state reset successfully")
                     
                 except Exception as e:
-                    logger.error(f"❌ Error resetting Active_screen: {e}")
+                    logger.error(f" Error resetting Active_screen: {e}")
             
             # Force manual reset of essential flags only
             if hasattr(self, 'game_manager') and self.game_manager:
@@ -3355,34 +3355,34 @@ class MainApp(QtWidgets.QMainWindow):
                 self.game_manager.submit_score_flag = False
                 self.game_manager.started_flag = False  # CRITICAL: Reset like CAGE_Game.py
                 self.game_manager.cancel_flag = False
-                logger.debug(f"🔄 GameManager flags reset: started_flag={self.game_manager.started_flag}")
+                logger.debug(f" GameManager flags reset: started_flag={self.game_manager.started_flag}")
             
         except Exception as e:
-            logger.error(f"❌ Error during cancellation cleanup: {e}")
+            logger.error(f" Error during cancellation cleanup: {e}")
         
         # Always try to go to home screen, regardless of cleanup errors
         try:
-            logger.info("🏠 Moving to home screen after cancellation...")
+            logger.info(" Moving to home screen after cancellation...")
             self.start_Home_screen()
-            logger.info("✅ Successfully moved to home screen after cancellation")
+            logger.info(" Successfully moved to home screen after cancellation")
         except Exception as e:
-            logger.error(f"❌ Error moving to home screen after cancellation: {e}")
+            logger.error(f" Error moving to home screen after cancellation: {e}")
             # Last resort - try basic home screen setup
             try:
                 global homeOpened
                 homeOpened = True
-                logger.info("🔄 Set homeOpened flag as fallback")
+                logger.info(" Set homeOpened flag as fallback")
             except Exception as e2:
-                logger.error(f"❌ Fallback failed: {e2}")
+                logger.error(f" Fallback failed: {e2}")
 
     def _reset_active_screen_state(self):
         """Reset Active_screen state without recreating objects to avoid resource conflicts"""
         try:
             if not hasattr(self, 'ui_active') or not self.ui_active:
-                logger.warning("⚠️  ui_active not available for state reset")
+                logger.warning("  ui_active not available for state reset")
                 return
             
-            logger.info("🔄 Resetting Active_screen state without object recreation...")
+            logger.info(" Resetting Active_screen state without object recreation...")
             
             # Reset game state variables
             global gameStarted, gameRunning, scored, list_players_score
@@ -3392,7 +3392,7 @@ class MainApp(QtWidgets.QMainWindow):
             scored = 0
             list_players_score = [0,0,0,0]
             
-            logger.debug("✅ Global game state variables reset")
+            logger.debug(" Global game state variables reset")
             
             # Reset MediaPlayer state (reuse existing player)
             if hasattr(self.ui_active, 'player') and self.ui_active.player:
@@ -3400,9 +3400,9 @@ class MainApp(QtWidgets.QMainWindow):
                     self.ui_active.player.stop()
                     if multimedia_available:
                         self.ui_active.player.setMedia(QMediaContent())  # Clear any loaded media
-                    logger.debug("✅ MediaPlayer state reset (reused existing player)")
+                    logger.debug(" MediaPlayer state reset (reused existing player)")
                 except Exception as e:
-                    logger.warning(f"⚠️  Error resetting MediaPlayer: {e}")
+                    logger.warning(f"  Error resetting MediaPlayer: {e}")
             
             # Reset MQTT thread state (reuse existing connection if available)
             if hasattr(self.ui_active, 'mqtt_thread') and self.ui_active.mqtt_thread:
@@ -3412,21 +3412,21 @@ class MainApp(QtWidgets.QMainWindow):
                         self.ui_active.mqtt_thread.connected and
                         hasattr(self.ui_active.mqtt_thread, 'client') and
                         self.ui_active.mqtt_thread.client):
-                        logger.debug("✅ MQTT thread still connected, reusing existing connection")
+                        logger.debug(" MQTT thread still connected, reusing existing connection")
                     else:
-                        logger.debug("🔄 MQTT thread disconnected, will reconnect on next game start")
+                        logger.debug(" MQTT thread disconnected, will reconnect on next game start")
                 except Exception as e:
-                    logger.warning(f"⚠️  Error checking MQTT state: {e}")
+                    logger.warning(f"  Error checking MQTT state: {e}")
             
-            logger.info("✅ Active_screen state reset completed without object recreation")
+            logger.info(" Active_screen state reset completed without object recreation")
             
         except Exception as e:
-            logger.error(f"❌ Error in _reset_active_screen_state: {e}")
+            logger.error(f" Error in _reset_active_screen_state: {e}")
 
     def _safe_mqtt_subscribe(self):
         """Safely subscribe to MQTT data topics with proper error handling"""
         try:
-            logger.info("🔄 Subscribing to MQTT data topics...")
+            logger.info(" Subscribing to MQTT data topics...")
             if (hasattr(self.ui_active, 'mqtt_thread') and 
                 self.ui_active.mqtt_thread and 
                 hasattr(self.ui_active.mqtt_thread, 'subscribe_to_data_topics')):
@@ -3435,27 +3435,27 @@ class MainApp(QtWidgets.QMainWindow):
                 if (hasattr(self.ui_active.mqtt_thread, 'connected') and 
                     self.ui_active.mqtt_thread.connected):
                     self.ui_active.mqtt_thread.subscribe_to_data_topics()
-                    logger.debug("✅ Successfully subscribed to MQTT data topics")
+                    logger.debug(" Successfully subscribed to MQTT data topics")
                 else:
-                    logger.warning("⚠️  MQTT not connected, cannot subscribe to data topics")
+                    logger.warning("  MQTT not connected, cannot subscribe to data topics")
                     # Try to ensure MQTT is ready and retry once
                     if hasattr(self.ui_active, '_ensure_mqtt_ready'):
                         if self.ui_active._ensure_mqtt_ready():
                             self.ui_active.mqtt_thread.subscribe_to_data_topics()
-                            logger.info("✅ MQTT reconnected and subscribed to data topics")
+                            logger.info(" MQTT reconnected and subscribed to data topics")
                         else:
-                            logger.warning("⚠️  MQTT reconnection failed")
+                            logger.warning("  MQTT reconnection failed")
             else:
-                logger.warning("⚠️  MQTT thread not available for subscription")
-            logger.info("✅ Successfully subscribed to MQTT data topics")
+                logger.warning("  MQTT thread not available for subscription")
+            logger.info(" Successfully subscribed to MQTT data topics")
 
-            logger.info("✅ Successfully subscribed to MQTT control topics")
+            logger.info(" Successfully subscribed to MQTT control topics")
         except Exception as e:
-            logger.error(f"❌ Error subscribing to MQTT data topics: {e}")
+            logger.error(f" Error subscribing to MQTT data topics: {e}")
 
     def start_Home_screen(self):
         """Start Home Screen with comprehensive error handling"""
-        logger.info("🏠 Starting Home Screen")
+        logger.info(" Starting Home Screen")
         try:
             # Close any current screens safely
             self._close_current_screen()
@@ -3463,13 +3463,13 @@ class MainApp(QtWidgets.QMainWindow):
             # Setup and show home screen
             self.ui_home.setupUi(self.mainWindow)
             self.mainWindow.show()
-            logger.debug("✅ Home screen started successfully")
+            logger.debug(" Home screen started successfully")
         except Exception as e:
-            logger.error(f"❌ Error starting home screen: {e}")
+            logger.error(f" Error starting home screen: {e}")
     
     def start_Active_screen(self):
         """Start Active Screen with comprehensive error handling"""
-        logger.info("🎮 Starting Active Screen")
+        logger.info(" Starting Active Screen")
         try:
             # Close any current screens safely
             self._close_current_screen()
@@ -3477,13 +3477,13 @@ class MainApp(QtWidgets.QMainWindow):
             # Setup and show active screen
             self.ui_active.setupUi(self.mainWindow)
             self.mainWindow.show()
-            logger.debug("✅ Active screen started successfully")
+            logger.debug(" Active screen started successfully")
         except Exception as e:
-            logger.error(f"❌ Error starting active screen: {e}")
+            logger.error(f" Error starting active screen: {e}")
     
     def start_final_screen(self):
         """Start Final Screen with comprehensive error handling"""
-        logger.info("🏆 Starting Final Screen")
+        logger.info(" Starting Final Screen")
         try:
             # Close any current screens safely
             self._close_current_screen()
@@ -3491,7 +3491,7 @@ class MainApp(QtWidgets.QMainWindow):
             # Setup and show final screen
             self.ui_final.setupUi(self.mainWindow)
             self.mainWindow.show()
-            logger.debug("✅ Final screen started successfully")
+            logger.debug(" Final screen started successfully")
             
             # Set up automatic transition back to home screen after final_screen_timer_idle
             logger.info(f"⏰ Setting final screen auto-transition timer: {final_screen_timer_idle}ms")
@@ -3501,7 +3501,7 @@ class MainApp(QtWidgets.QMainWindow):
             ))
             
         except Exception as e:
-            logger.error(f"❌ Error starting final screen: {e}")
+            logger.error(f" Error starting final screen: {e}")
     
     def _close_current_screen(self):
         """Safely close any currently active screen"""
@@ -3515,16 +3515,16 @@ class MainApp(QtWidgets.QMainWindow):
                     central_widget.hide()
                     central_widget.close()
                     # Don't call deleteLater() - let Qt handle it automatically
-                    logger.debug("✅ Current screen closed safely")
+                    logger.debug(" Current screen closed safely")
                 except RuntimeError:
                     # Widget already deleted by Qt
-                    logger.debug("✅ Current screen was already deleted by Qt")
+                    logger.debug(" Current screen was already deleted by Qt")
         except Exception as e:
-            logger.warning(f"⚠️  Error closing current screen: {e}")
+            logger.warning(f"  Error closing current screen: {e}")
     
     def _cleanup_all_screens(self):
         """Comprehensive cleanup of all UI screens"""
-        logger.debug("🔄 Cleaning up all screens...")
+        logger.debug(" Cleaning up all screens...")
         
         # Close all UI screens safely
         for screen_name in ['ui_final', 'ui_home', 'ui_active']:
@@ -3537,35 +3537,35 @@ class MainApp(QtWidgets.QMainWindow):
                             screen.objectName()  # Test if object is still valid
                             screen.close()
                             # Don't call deleteLater() - let Qt handle it automatically
-                            logger.debug(f"✅ {screen_name} closed")
+                            logger.debug(f" {screen_name} closed")
                         except RuntimeError:
                             # Screen already deleted by Qt
-                            logger.debug(f"✅ {screen_name} was already deleted by Qt")
+                            logger.debug(f" {screen_name} was already deleted by Qt")
                 except Exception as e:
-                    logger.warning(f"⚠️  Error closing {screen_name}: {e}")
+                    logger.warning(f"  Error closing {screen_name}: {e}")
         
-        logger.debug("✅ All screens cleaned up")
+        logger.debug(" All screens cleaned up")
 
     def close_application(self):
         """Comprehensive application cleanup and shutdown"""
-        logger.info("🛑 Closing FalconGrasp application with comprehensive cleanup...")
+        logger.info(" Closing FalconGrasp application with comprehensive cleanup...")
         
         try:
             # Stop GameManager thread first
             if hasattr(self, 'game_manager') and self.game_manager:
                 try:
                     self.game_manager.stop_manager()
-                    logger.debug("✅ GameManager stopped")
+                    logger.debug(" GameManager stopped")
                 except Exception as e:
-                    logger.warning(f"⚠️  Error stopping GameManager: {e}")
+                    logger.warning(f"  Error stopping GameManager: {e}")
             
             # Close main window
             if hasattr(self, 'mainWindow') and self.mainWindow:
                 try:
                     self.mainWindow.close()
-                    logger.debug("✅ Main window closed")
+                    logger.debug(" Main window closed")
                 except Exception as e:
-                    logger.warning(f"⚠️  Error closing main window: {e}")
+                    logger.warning(f"  Error closing main window: {e}")
             
             # Close all UI screens safely
             for screen_name in ['ui_final', 'ui_home', 'ui_active']:
@@ -3578,24 +3578,24 @@ class MainApp(QtWidgets.QMainWindow):
                                 screen.objectName()  # Test if object is still valid
                                 screen.close()
                                 # Don't call deleteLater() - let Qt handle it automatically
-                                logger.debug(f"✅ {screen_name} closed")
+                                logger.debug(f" {screen_name} closed")
                             except RuntimeError:
                                 # Screen already deleted by Qt
-                                logger.debug(f"✅ {screen_name} was already deleted by Qt")
+                                logger.debug(f" {screen_name} was already deleted by Qt")
                     except Exception as e:
-                        logger.warning(f"⚠️  Error closing {screen_name}: {e}")
+                        logger.warning(f"  Error closing {screen_name}: {e}")
             
             # Quit application
-            logger.info("✅ FalconGrasp application cleanup completed")
+            logger.info(" FalconGrasp application cleanup completed")
             QtWidgets.QApplication.quit()
             
         except Exception as e:
-            logger.error(f"❌ Error during application cleanup: {e}")
+            logger.error(f" Error during application cleanup: {e}")
             QtWidgets.QApplication.quit()
 
     def closeEvent(self, event):
         """Handle application close event with comprehensive cleanup"""
-        logger.info("🔄 MainApp closeEvent triggered - starting comprehensive shutdown...")
+        logger.info(" MainApp closeEvent triggered - starting comprehensive shutdown...")
         
         try:
             # Force stop all timers first to prevent new activities
@@ -3608,20 +3608,20 @@ class MainApp(QtWidgets.QMainWindow):
             if hasattr(self, 'game_manager') and self.game_manager:
                 try:
                     self.game_manager.stop_manager()
-                    logger.debug("✅ GameManager stopped")
+                    logger.debug(" GameManager stopped")
                 except Exception as e:
-                    logger.warning(f"⚠️  Error stopping GameManager in closeEvent: {e}")
+                    logger.warning(f"  Error stopping GameManager in closeEvent: {e}")
             
-            logger.info("✅ FalconGrasp MainApp closeEvent cleanup completed")
+            logger.info(" FalconGrasp MainApp closeEvent cleanup completed")
             event.accept()  # Allow the close event to proceed
             
         except Exception as e:
-            logger.error(f"❌ Error during MainApp closeEvent: {e}")
+            logger.error(f" Error during MainApp closeEvent: {e}")
             event.accept()  # Still allow close even if cleanup fails
 
     def _force_stop_all_timers(self):
         """Force stop all timers across all screens for safe shutdown"""
-        logger.debug("🛑 Force stopping all timers...")
+        logger.debug(" Force stopping all timers...")
         
         try:
             # Stop Active screen timers
@@ -3629,50 +3629,50 @@ class MainApp(QtWidgets.QMainWindow):
                 try:
                     if hasattr(self.ui_active, 'timer') and self.ui_active.timer:
                         self.ui_active.timer.stop()
-                        logger.debug("🛑 Active screen timer stopped")
+                        logger.debug(" Active screen timer stopped")
                     if hasattr(self.ui_active, 'TimerGame') and self.ui_active.TimerGame:
                         self.ui_active.TimerGame.stop()
-                        logger.debug("🛑 Active screen TimerGame stopped")
+                        logger.debug(" Active screen TimerGame stopped")
                 except Exception as e:
-                    logger.warning(f"⚠️  Error stopping active screen timers: {e}")
+                    logger.warning(f"  Error stopping active screen timers: {e}")
             
             # Stop Home screen timers
             if hasattr(self, 'ui_home') and self.ui_home:
                 try:
                     if hasattr(self.ui_home, 'timer') and self.ui_home.timer:
                         self.ui_home.timer.stop()
-                        logger.debug("🛑 Home screen timer stopped")
+                        logger.debug(" Home screen timer stopped")
                     if hasattr(self.ui_home, 'timer2') and self.ui_home.timer2:
                         self.ui_home.timer2.stop()
-                        logger.debug("🛑 Home screen timer2 stopped")
+                        logger.debug(" Home screen timer2 stopped")
                 except Exception as e:
-                    logger.warning(f"⚠️  Error stopping home screen timers: {e}")
+                    logger.warning(f"  Error stopping home screen timers: {e}")
             
             # Stop Team Member screen timers
             if hasattr(self, 'ui_team_member') and self.ui_team_member:
                 try:
                     if hasattr(self.ui_team_member, 'timer') and self.ui_team_member.timer:
                         self.ui_team_member.timer.stop()
-                        logger.debug("🛑 Team member screen timer stopped")
+                        logger.debug(" Team member screen timer stopped")
                     if hasattr(self.ui_team_member, 'timer2') and self.ui_team_member.timer2:
                         self.ui_team_member.timer2.stop()
-                        logger.debug("🛑 Team member screen timer2 stopped")
+                        logger.debug(" Team member screen timer2 stopped")
                 except Exception as e:
-                    logger.warning(f"⚠️  Error stopping team member screen timers: {e}")
+                    logger.warning(f"  Error stopping team member screen timers: {e}")
             
             # Stop Final screen timers if any
             if hasattr(self, 'ui_final') and self.ui_final:
                 try:
                     if hasattr(self.ui_final, 'timer') and self.ui_final.timer:
                         self.ui_final.timer.stop()
-                        logger.debug("🛑 Final screen timer stopped")
+                        logger.debug(" Final screen timer stopped")
                 except Exception as e:
-                    logger.warning(f"⚠️  Error stopping final screen timers: {e}")
+                    logger.warning(f"  Error stopping final screen timers: {e}")
                     
-            logger.debug("✅ All timers force stopped")
+            logger.debug(" All timers force stopped")
             
         except Exception as e:
-            logger.error(f"❌ Error in _force_stop_all_timers: {e}")
+            logger.error(f" Error in _force_stop_all_timers: {e}")
 
 
 if __name__ == "__main__":
@@ -3684,5 +3684,5 @@ if __name__ == "__main__":
         main_app = MainApp()
         sys.exit(app.exec_())
     except Exception as e:
-        logger.error(f"❌ Fatal error in FalconGrasp application: {e}")
+        logger.error(f" Fatal error in FalconGrasp application: {e}")
         sys.exit(1)

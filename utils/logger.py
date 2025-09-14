@@ -101,11 +101,11 @@ def create_file_handler(log_level: int, game_prefix: str = "falcongrasp") -> Opt
         )
         file_handler.setFormatter(file_formatter)
         
-        print(f"📁 Log file created: {log_filepath}")
+        print(f" Log file created: {log_filepath}")
         return file_handler
         
     except Exception as e:
-        print(f"❌ Failed to create file handler: {e}")
+        print(f" Failed to create file handler: {e}")
         return None
 
 
@@ -160,10 +160,10 @@ def setup_root_logger(level: str = "INFO", log_file: Optional[str] = None):
             file_handler.setFormatter(file_formatter)
             root_logger.addHandler(file_handler)
             
-            print(f"📁 Root log file created: {log_file}")
+            print(f" Root log file created: {log_file}")
             
         except Exception as e:
-            print(f"❌ Failed to create root log file {log_file}: {e}")
+            print(f" Failed to create root log file {log_file}: {e}")
     
     return root_logger
 

@@ -1026,9 +1026,9 @@ class Final_Screen(QtWidgets.QMainWindow):
         
         # Setup GIF animation
         if scaled == 1:
-            self.movie = QMovie("Assets/1k/portrait/portrait_CatchTheStick_final.gif")
+            self.movie = QMovie("Assets/1k/portrait/portrait_CatchTheStick_final_OLD.gif")
         else:
-            self.movie = QMovie("Assets/1k/portrait/portrait_CatchTheStick_final.gif")
+            self.movie = QMovie("Assets/1k/portrait/portrait_CatchTheStick_final_OLD.gif")
         
         self.movie.setCacheMode(QMovie.CacheAll)
         self.Background.setMovie(self.movie)
@@ -1123,6 +1123,22 @@ class Final_Screen(QtWidgets.QMainWindow):
 
             QTableWidget::item:hover {
                 background-color: #001f3f;  /* Dark blue background on hover */
+            }
+
+            /* QScrollBar Styling */
+            QScrollBar:vertical, QScrollBar:horizontal {
+                background-color: #1c2833;  /* Deep muted blue background for scrollbar */
+                border: 1px solid #3b5998;  /* Border color */
+                border-radius: 4px;  /* Rounded corners */
+            }
+
+            QScrollBar::handle:vertical, QScrollBar::handle:horizontal {
+                background-color: #2e4053;  /* Darker muted blue handle */
+                border-radius: 4px;  /* Rounded corners */
+            }
+
+            QScrollBar::handle:vertical:hover, QScrollBar::handle:horizontal:hover {
+                background-color: #4c669f;  /* Medium muted blue handle on hover */
             }
         """)
         
@@ -1256,10 +1272,16 @@ class Final_Screen(QtWidgets.QMainWindow):
         self.LeaderBoardTable.horizontalHeader().setMinimumSectionSize(100*self.scale)
         self.LeaderBoardTable.horizontalHeader().setStretchLastSection(False)
         self.LeaderBoardTable.verticalHeader().setVisible(False)
-        self.LeaderBoardTable.verticalHeader().setCascadingSectionResizes(True)
-        self.LeaderBoardTable.verticalHeader().setDefaultSectionSize(65*self.scale)
-        self.LeaderBoardTable.verticalHeader().setMinimumSectionSize(50*self.scale)
-        self.LeaderBoardTable.verticalHeader().setStretchLastSection(False)
+        self.LeaderBoardTable.verticalHeader().setCascadingSectionResizes(False)
+        
+        # Calculate flexible row heights for the table height (415px)
+        # Total available height: 415px minus header and padding
+        available_height = int(415 * self.scale - 80)  # Account for header and padding
+        row_height = int(available_height / 5)  # Distribute equally among 5 rows
+        
+        for i in range(5):
+            self.LeaderBoardTable.verticalHeader().resizeSection(i, row_height)
+        # self.LeaderBoardTable.verticalHeader().setStretchLastSection(True)
         
         self.gridLayout.addWidget(self.LeaderBoardTable, 0, 0, 1, 1)
         
@@ -1488,9 +1510,9 @@ class TeamMember_screen(QtWidgets.QMainWindow):
             
             # Setup GIF
             if self.sized.width() > 1080:
-                self.movie = QMovie("Assets/1k/portrait/portrait_CatchTheStick_inActive.gif")
+                self.movie = QMovie("Assets/1k/portrait/portrait_CatchTheStick_inActive_OLD.gif")
             else:
-                self.movie = QMovie("Assets/1k/portrait/portrait_CatchTheStick_inActive.gif")
+                self.movie = QMovie("Assets/1k/portrait/portrait_CatchTheStick_inActive_OLD.gif")
             
             self.movie.setCacheMode(QMovie.CacheAll)
             self.Background.setMovie(self.movie)
@@ -1502,7 +1524,7 @@ class TeamMember_screen(QtWidgets.QMainWindow):
             self.frame_2.setGeometry(QtCore.QRect(200*self.scale, 565*self.scale, 650*self.scale, 415*self.scale))
             self.gridLayout = QtWidgets.QGridLayout(self.frame_2)
             self.LeaderboardTable = QtWidgets.QTableWidget(self.frame_2)
-            self.LeaderboardTable.setRowCount(5)
+            self.LeaderboardTable.setRowCount(4)
             self.LeaderboardTable.setColumnCount(1)
             
             
@@ -1549,11 +1571,27 @@ class TeamMember_screen(QtWidgets.QMainWindow):
                 QTableWidget::item:hover {
                     background-color: #001f3f;  /* Dark blue background on hover */
                 }
+
+                /* QScrollBar Styling */
+                QScrollBar:vertical, QScrollBar:horizontal {
+                    background-color: #1c2833;  /* Deep muted blue background for scrollbar */
+                    border: 1px solid #3b5998;  /* Border color */
+                    border-radius: 4px;  /* Rounded corners */
+                }
+
+                QScrollBar::handle:vertical, QScrollBar::handle:horizontal {
+                    background-color: #2e4053;  /* Darker muted blue handle */
+                    border-radius: 4px;  /* Rounded corners */
+                }
+
+                QScrollBar::handle:vertical:hover, QScrollBar::handle:horizontal:hover {
+                    background-color: #4c669f;  /* Medium muted blue handle on hover */
+                }
             """)
             
             # Set headers and items
             self.LeaderboardTable.setHorizontalHeaderLabels(["Team", "Score"])
-            for i in range(5):
+            for i in range(4):
                 for j in range(1):
                     item = QtWidgets.QTableWidgetItem()
                     item.setTextAlignment(QtCore.Qt.AlignCenter)
@@ -1673,14 +1711,20 @@ class TeamMember_screen(QtWidgets.QMainWindow):
             
             self.LeaderboardTable.horizontalHeader().setVisible(True)
             self.LeaderboardTable.horizontalHeader().setCascadingSectionResizes(True)
-            self.LeaderboardTable.horizontalHeader().setDefaultSectionSize(300*self.scale)
+            self.LeaderboardTable.horizontalHeader().setDefaultSectionSize(600*self.scale)
             self.LeaderboardTable.horizontalHeader().setMinimumSectionSize(100*self.scale)
             self.LeaderboardTable.horizontalHeader().setStretchLastSection(False)
             self.LeaderboardTable.verticalHeader().setVisible(False)
-            self.LeaderboardTable.verticalHeader().setCascadingSectionResizes(True)
-            self.LeaderboardTable.verticalHeader().setDefaultSectionSize(65*self.scale)
-            self.LeaderboardTable.verticalHeader().setMinimumSectionSize(50*self.scale)
-            self.LeaderboardTable.verticalHeader().setStretchLastSection(False)
+            self.LeaderboardTable.verticalHeader().setCascadingSectionResizes(False)
+            
+            # Calculate flexible row heights for the table height (415px)
+            # Total available height: 415px minus header and padding
+            available_height = int(415 * self.scale - 80)  # Account for header and padding
+            row_height = int(available_height / 4)  # Distribute equally among 4 rows
+            
+            for i in range(4):
+                self.LeaderboardTable.verticalHeader().resizeSection(i, row_height)
+            # self.LeaderboardTable.verticalHeader().setStretchLastSection(True)
             # Professional table styling
             font = QtGui.QFont()
             font.setFamily(self.font_family_good)
@@ -1713,7 +1757,7 @@ class TeamMember_screen(QtWidgets.QMainWindow):
             logger.debug(f" Updating table with {len(list_players_name)} entries")
             
             # Clear all rows first
-            for i in range(5):
+            for i in range(4):
                 self.LeaderboardTable.setItem(i, 0, QtWidgets.QTableWidgetItem(""))
             
             # Sort data by score (descending)
@@ -1722,7 +1766,7 @@ class TeamMember_screen(QtWidgets.QMainWindow):
             
             # Populate table with data
             for i, (player_name) in enumerate(sorted_data):
-                if i >= 5:  # Only show top 5
+                if i >= 4:  # Only show top 5
                     break
 
                 player_name_item = QtWidgets.QTableWidgetItem(str(player_name))
@@ -1761,11 +1805,11 @@ class TeamMember_screen(QtWidgets.QMainWindow):
             global scaled
             if scaled == 1:
                 if hasattr(self, 'movie') and self.movie is not None:
-                    self.movie = QMovie("Assets/1k/portrait/portrait_CatchTheStick_inActive.gif")
+                    self.movie = QMovie("Assets/1k/portrait/portrait_CatchTheStick_inActive_OLD.gif")
                     self.movie.setCacheMode(QMovie.CacheAll)
             else:
                 if hasattr(self, 'movie') and self.movie is not None:
-                    self.movie = QMovie("Assets/1k/portrait/portrait_CatchTheStick_inActive.gif")
+                    self.movie = QMovie("Assets/1k/portrait/portrait_CatchTheStick_inActive_OLD.gif")
                     self.movie.setCacheMode(QMovie.CacheAll)
             
             # Set the new movie and start it
@@ -1871,9 +1915,9 @@ class Home_screen(QtWidgets.QMainWindow):
             
             # Setup GIF
             if self.sized.width() > 1080:
-                self.movie = QMovie("Assets/1k/portrait/portrait_CatchTheStick_intro.gif")
+                self.movie = QMovie("Assets/1k/portrait/portrait_CatchTheStick_intro_OLD.gif")
             else:
-                self.movie = QMovie("Assets/1k/portrait/portrait_CatchTheStick_intro.gif")
+                self.movie = QMovie("Assets/1k/portrait/portrait_CatchTheStick_intro_OLD.gif")
             
             self.movie.setCacheMode(QMovie.CacheAll)
             self.Background.setMovie(self.movie)
@@ -1931,6 +1975,22 @@ class Home_screen(QtWidgets.QMainWindow):
 
                 QTableWidget::item:hover {
                     background-color: #001f3f;  /* Dark blue background on hover */
+                }
+
+                /* QScrollBar Styling */
+                QScrollBar:vertical, QScrollBar:horizontal {
+                    background-color: #1c2833;  /* Deep muted blue background for scrollbar */
+                    border: 1px solid #3b5998;  /* Border color */
+                    border-radius: 4px;  /* Rounded corners */
+                }
+
+                QScrollBar::handle:vertical, QScrollBar::handle:horizontal {
+                    background-color: #2e4053;  /* Darker muted blue handle */
+                    border-radius: 4px;  /* Rounded corners */
+                }
+
+                QScrollBar::handle:vertical:hover, QScrollBar::handle:horizontal:hover {
+                    background-color: #4c669f;  /* Medium muted blue handle on hover */
                 }
             """)
             
@@ -2060,10 +2120,16 @@ class Home_screen(QtWidgets.QMainWindow):
             self.LeaderboardTable.horizontalHeader().setMinimumSectionSize(100*self.scale)
             self.LeaderboardTable.horizontalHeader().setStretchLastSection(False)
             self.LeaderboardTable.verticalHeader().setVisible(False)
-            self.LeaderboardTable.verticalHeader().setCascadingSectionResizes(True)
-            self.LeaderboardTable.verticalHeader().setDefaultSectionSize(65*self.scale)
-            self.LeaderboardTable.verticalHeader().setMinimumSectionSize(50*self.scale)
-            self.LeaderboardTable.verticalHeader().setStretchLastSection(False)
+            self.LeaderboardTable.verticalHeader().setCascadingSectionResizes(False)
+            
+            # Calculate flexible row heights for the table height (415px)
+            # Total available height: 415px minus header and padding
+            available_height = int(415 * self.scale-80 )  # Account for header and padding
+            row_height = int(available_height / 5)  # Distribute equally among 4 rows
+            
+            for i in range(5):
+                self.LeaderboardTable.verticalHeader().resizeSection(i, row_height)
+            # self.LeaderboardTable.verticalHeader().setStretchLastSection(True)
             # Professional table styling
             font = QtGui.QFont()
             font.setFamily(self.font_family_good)
@@ -2115,11 +2181,11 @@ class Home_screen(QtWidgets.QMainWindow):
             global scaled
             if scaled == 1:
                 if hasattr(self, 'movie') and self.movie is not None:
-                    self.movie = QMovie("Assets/1k/portrait/portrait_CatchTheStick_inActive.gif")
+                    self.movie = QMovie("Assets/1k/portrait/portrait_CatchTheStick_inActive_OLD.gif")
                     self.movie.setCacheMode(QMovie.CacheAll)
             else:
                 if hasattr(self, 'movie') and self.movie is not None:
-                    self.movie = QMovie("Assets/1k/portrait/portrait_CatchTheStick_inActive.gif")
+                    self.movie = QMovie("Assets/1k/portrait/portrait_CatchTheStick_inActive_OLD.gif")
                     self.movie.setCacheMode(QMovie.CacheAll)
                 
             # Set the new movie and start it
@@ -2161,11 +2227,11 @@ class Home_screen(QtWidgets.QMainWindow):
             
         if scaled == 1:
             if hasattr(self, 'movie') and self.movie is not None:
-                self.movie = QMovie("Assets/1k/portrait/portrait_CatchTheStick_intro.gif")
+                self.movie = QMovie("Assets/1k/portrait/portrait_CatchTheStick_intro_OLD.gif")
                 self.movie.setCacheMode(QMovie.CacheAll)
         else:
             if hasattr(self, 'movie') and self.movie is not None:
-                self.movie = QMovie("Assets/1k/portrait/portrait_CatchTheStick_intro.gif")
+                self.movie = QMovie("Assets/1k/portrait/portrait_CatchTheStick_intro_OLD.gif")
                 self.movie.setCacheMode(QMovie.CacheAll)
             
         # Safe background and movie operations
@@ -2576,7 +2642,7 @@ class Active_screen(QWidget):
         try:
             # Calculate final score from player scores
             global list_players_score
-            scored = sum(list_players_score[:5])  # Sum of all player scores
+            scored = sum(list_players_score[:4])  # Sum of all player scores
             
             # Publish MQTT game stop message
             self._safe_mqtt_publish("FalconGrasp/game/stop", "stop")
@@ -2721,11 +2787,11 @@ class Active_screen(QWidget):
             
             # Scaling setup (exact CatchTheStick.py logic)
             if MainWindow.geometry().width() > 1080:
-                self.movie = QMovie("Assets/1k/portrait/portrait_CatchTheStick_Active.gif")
+                self.movie = QMovie("Assets/1k/portrait/portrait_CatchTheStick_Active_OLD.gif")
                 self.movie.setCacheMode(QMovie.CacheAll)
                 self.scale = 2
             else:
-                self.movie = QMovie("Assets/1k/portrait/portrait_CatchTheStick_Active.gif")
+                self.movie = QMovie("Assets/1k/portrait/portrait_CatchTheStick_Active_OLD.gif")
                 self.movie.setCacheMode(QMovie.CacheAll)
                 self.scale = 1
             
@@ -2833,7 +2899,7 @@ class Active_screen(QWidget):
             self.frame_2.setGeometry(QtCore.QRect(200*self.scale, 720*self.scale, 650*self.scale, 415*self.scale))
             self.gridLayout = QtWidgets.QGridLayout(self.frame_2)
             self.tableWidget_2 = QtWidgets.QTableWidget(self.frame_2)
-            self.tableWidget_2.setRowCount(5)
+            self.tableWidget_2.setRowCount(4)
             self.tableWidget_2.setColumnCount(2)
             
             # Table styling - original CatchTheStick
@@ -2883,11 +2949,27 @@ class Active_screen(QWidget):
                 QTableWidget::item:hover {
                     background-color: #001f3f;  /* Dark blue background on hover */
                 }
+
+                /* QScrollBar Styling */
+                QScrollBar:vertical, QScrollBar:horizontal {
+                    background-color: #1c2833;  /* Deep muted blue background for scrollbar */
+                    border: 1px solid #3b5998;  /* Border color */
+                    border-radius: 4px;  /* Rounded corners */
+                }
+
+                QScrollBar::handle:vertical, QScrollBar::handle:horizontal {
+                    background-color: #2e4053;  /* Darker muted blue handle */
+                    border-radius: 4px;  /* Rounded corners */
+                }
+
+                QScrollBar::handle:vertical:hover, QScrollBar::handle:horizontal:hover {
+                    background-color: #4c669f;  /* Medium muted blue handle on hover */
+                }
             """)
             
             # Set headers
             self.tableWidget_2.setHorizontalHeaderLabels(["Player", "Score"])
-            for i in range(5):
+            for i in range(4):
                 for j in range(2):
                     item = QtWidgets.QTableWidgetItem()
                     item.setTextAlignment(QtCore.Qt.AlignCenter)
@@ -3017,10 +3099,16 @@ class Active_screen(QWidget):
             self.tableWidget_2.horizontalHeader().setMinimumSectionSize(120*self.scale)
             self.tableWidget_2.horizontalHeader().setStretchLastSection(False)
             self.tableWidget_2.verticalHeader().setVisible(False)
-            self.tableWidget_2.verticalHeader().setCascadingSectionResizes(True)
-            self.tableWidget_2.verticalHeader().setDefaultSectionSize(65*self.scale)
-            self.tableWidget_2.verticalHeader().setMinimumSectionSize(50*self.scale)
-            self.tableWidget_2.verticalHeader().setStretchLastSection(False)
+            self.tableWidget_2.verticalHeader().setCascadingSectionResizes(False)
+            
+            # Calculate flexible row heights for the table height (415px)
+            # Total available height: 415px minus header and padding
+            available_height = int(415 * self.scale - 80)  # Account for header and padding
+            row_height = int(available_height / 4)  # Distribute equally among 4 rows
+            
+            for i in range(4):
+                self.tableWidget_2.verticalHeader().resizeSection(i, row_height)
+            # self.tableWidget_2.verticalHeader().setStretchLastSection(True)
             # hide scrollbar
             self.tableWidget_2.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
             self.tableWidget_2.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)

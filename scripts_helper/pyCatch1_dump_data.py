@@ -5,7 +5,7 @@ import random
 import paho.mqtt.client as mqtt
 
 # Dummy data configuration
-NUM_CAMERAS = 5
+NUM_CAMERAS = 4
 DUMMY_DATA_INTERVAL = 2  # Send dummy data every 2 seconds
 
 

@@ -19,7 +19,7 @@ colors = {
     "black": ((102, 0, 0), (160, 255, 43))
 }
 
-detected_colors = [set() for _ in range(5)]
+detected_colors = [set() for _ in range(4)]
 color_detection_counts = {color: 0 for color in colors.keys()}
 
 
@@ -102,7 +102,7 @@ class CameraThread(threading.Thread):
         num_colors = len(detected_colors[self.camera_index])*10
         try:
             # Publish the number of detected colors with QoS level 1
-            self.mqtt_client.publish(f"CatchTheStick/camera/{self.camera_index}", num_colors)
+            self.mqtt_client.publish(f"FalconGrasp/camera/{self.camera_index}", num_colors)
         except Exception as e:
             print(f"Error publishing to MQTT: {e}")
 
@@ -165,11 +165,11 @@ class VideoCaptureManager:
 
 
 def on_mqtt_message(client, userdata, message):
-    if message.topic == "CatchTheStick/game/start":
+    if message.topic == "FalconGrasp/game/start":
         print(f"Received MQTT message to start: {message.payload.decode()}")
         for thread in manager.camera_threads:
             thread.start_detection()  # Start detection for all threads
-    elif message.topic == "CatchTheStick/game/stop":
+    elif message.topic == "FalconGrasp/game/stop":
         print(f"Received MQTT message to stop: {message.payload.decode()}")
         for thread in manager.camera_threads:
             thread.stop_detection()  # Stop detection for all threads
@@ -193,8 +193,7 @@ if __name__ == "__main__":
         "rtsp://admin:infinity-2060@192.168.0.18:554",
         "rtsp://admin:infinity-2060@192.168.0.19:554",
         "rtsp://admin:infinity-2060@192.168.0.20:554",
-        "rtsp://admin:infinity-2060@192.168.0.21:554",
-        "rtsp://admin:infinity-2060@192.168.0.22:554"
+        "rtsp://admin:infinity-2060@192.168.0.21:554"
     ]
 
     # Define the cropping coordinates for each camera (x_start, y_start, x_end, y_end)
@@ -203,7 +202,7 @@ if __name__ == "__main__":
         (450, 370, 840, 900),  # Camera 2
         (450, 370, 830, 900),  # Camera 3
         (460, 350, 840, 700),  # Camera 4
-        (450, 350, 830, 720)   # Camera 5
+       
     ]
 
     # Set up MQTT client
@@ -211,8 +210,8 @@ if __name__ == "__main__":
     mqtt_client.on_message = on_mqtt_message
     mqtt_client.on_disconnect = on_mqtt_disconnect  # Set the disconnect callback
     mqtt_client.connect("localhost", 1883, 60)
-    mqtt_client.subscribe("CatchTheStick/game/start")
-    mqtt_client.subscribe("CatchTheStick/game/stop")
+    mqtt_client.subscribe("FalconGrasp/game/start")
+    mqtt_client.subscribe("FalconGrasp/game/stop")
     mqtt_client.loop_start()
 
     # Initialize the VideoCaptureManager

@@ -102,7 +102,7 @@ class CameraThread(threading.Thread):
         num_colors = len(detected_colors[self.camera_index])*10
         try:
             # Publish the number of detected colors with QoS level 1
-            self.mqtt_client.publish(f"CatchTheStick/camera/{self.camera_index}", num_colors)
+            self.mqtt_client.publish(f"FalconGrasp/camera/{self.camera_index}", num_colors)
         except Exception as e:
             print(f"Error publishing to MQTT: {e}")
 
@@ -165,11 +165,11 @@ class VideoCaptureManager:
 
 
 def on_mqtt_message(client, userdata, message):
-    if message.topic == "CatchTheStick/game/start":
+    if message.topic == "FalconGrasp/game/start":
         print(f"Received MQTT message to start: {message.payload.decode()}")
         for thread in manager.camera_threads:
             thread.start_detection()  # Start detection for all threads
-    elif message.topic == "CatchTheStick/game/stop":
+    elif message.topic == "FalconGrasp/game/stop":
         print(f"Received MQTT message to stop: {message.payload.decode()}")
         for thread in manager.camera_threads:
             thread.stop_detection()  # Stop detection for all threads
@@ -211,8 +211,8 @@ if __name__ == "__main__":
     mqtt_client.on_message = on_mqtt_message
     mqtt_client.on_disconnect = on_mqtt_disconnect  # Set the disconnect callback
     mqtt_client.connect("localhost", 1883, 60)
-    mqtt_client.subscribe("CatchTheStick/game/start")
-    mqtt_client.subscribe("CatchTheStick/game/stop")
+    mqtt_client.subscribe("FalconGrasp/game/start")
+    mqtt_client.subscribe("FalconGrasp/game/stop")
     mqtt_client.loop_start()
 
     # Initialize the VideoCaptureManager

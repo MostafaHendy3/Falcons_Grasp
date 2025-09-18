@@ -135,6 +135,9 @@ class ColorDetectionApp(QMainWindow):
         # Add stretch to push everything to top
         self.control_layout.addStretch()
         
+        # Logo Group - anchored at bottom
+        self.create_logo_display()
+        
         self.main_layout.addWidget(self.control_panel, 1)  # Takes 1/3 of horizontal space
 
     def create_hsv_controls(self):
@@ -263,6 +266,36 @@ class ColorDetectionApp(QMainWindow):
         
         self.hsv_display_layout.addWidget(self.hsv_value_label)
         self.control_layout.addWidget(self.hsv_display_group)
+
+    def create_logo_display(self):
+        """Create logo display at bottom right"""
+        self.logo_group = QGroupBox("")
+        self.logo_group.setMaximumHeight(300)  # Limit height
+        self.logo_layout = QVBoxLayout()
+        self.logo_group.setLayout(self.logo_layout)
+        
+        # Create logo label
+        self.logo_label = QLabel()
+        self.logo_label.setAlignment(Qt.AlignCenter)
+        self.logo_label.setMaximumHeight(300)
+        self.logo_label.setScaledContents(True)
+        
+        # Load and set the logo
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        logo_path = os.path.join(script_dir, "Infinity_logo.png")
+        if os.path.exists(logo_path):
+            pixmap = QPixmap(logo_path)
+            if not pixmap.isNull():
+                # Scale the logo to fit within the label while maintaining aspect ratio
+                scaled_pixmap = pixmap.scaled(300, 300, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+                self.logo_label.setPixmap(scaled_pixmap)
+            else:
+                self.logo_label.setText("Logo not found")
+        else:
+            self.logo_label.setText("Logo file not found")
+        
+        self.logo_layout.addWidget(self.logo_label)
+        self.control_layout.addWidget(self.logo_group)
 
     def create_labeled_slider(self, label_text, min_val, max_val, initial_val):
         """Create a slider with proper range and initial value"""

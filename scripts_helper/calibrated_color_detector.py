@@ -454,6 +454,7 @@ class CalibratedColorDetector(QMainWindow):
             
         # Capture frame
         ret, frame = self.cap.read()
+
         
         if not ret:
             # Try to loop video if it's a file
@@ -463,6 +464,9 @@ class CalibratedColorDetector(QMainWindow):
             else:
                 print("Error: Could not read frame")
                 return
+        # Apply bilateral filter for noise reduction while preserving edges
+        if ret:
+            frame = cv2.bilateralFilter(frame, d=9, sigmaColor=75, sigmaSpace=75)
         
         # Store current frame for paused processing
         self.paused_frame = frame.copy()

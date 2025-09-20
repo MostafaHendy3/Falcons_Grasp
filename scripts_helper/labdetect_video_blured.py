@@ -70,7 +70,7 @@ class ColorDetectionApp(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self.setWindowTitle('Hybrid HSV+LAB Stick Detection with Counting')
+        self.setWindowTitle('Hybrid HSV+LAB Color Detection - Counting Unique Colors')
         self.setGeometry(100, 100, 1400, 900)
         self.setMinimumSize(1200, 800)
 
@@ -171,14 +171,60 @@ class ColorDetectionApp(QMainWindow):
         # A Lower: -49, A Upper: -27
         # B Lower: -10, B Upper: 2
         self.stick_colors = {
-                'pink': {'hsv': ((148, 34, 107), (165, 133, 255)), 'lab': ((int(55*2.55), 19+127, -25+127), (int(100*2.55), 59+127, 6+127))},
-            'purple': {'hsv': ((120, 78, 0), (135, 186, 255)), 'lab': ((int(8*2.55), 141, 91), (100, 255, 255))},
-            'light_green': {'hsv': ((66, 114, 39), (88, 255, 255)), 'lab': ((int(39*2.55), -55+127, -10+127), (int(95*2.55), 18+127, 23+127))},
-            'blue': {'hsv': ((42, 0, 0), (117, 255, 255)), 'lab': ((int(56*2.55), 135, 0), (255, 255, 255))},
-            'yellow': {'hsv': ((24, 0, 0), (40, 255, 255)), 'lab': ((int(155*2.55), 97, 141), (255, 123, 255))},
-            'red': {'hsv': ((160, 62, 0), (179, 255, 255)), 'lab': ((int(87*2.55), 111, 119), (255, 255, 255))},
-            'dark_green': {'hsv': ((81, 120, 107), (90, 205, 255)), 'lab': ((int(42*2.55), -49+127, -10+127), (int(92*2.55), -27+127, 2+127))},
-            'cyan': {'hsv': ((90, 121, 176), (103, 255, 255)), 'lab': ((int(30*2.55), -99+127, -31+127), (int(95*2.55), -14+127, -13+127))},
+            'pink': {
+                'hsv': ((149, 30, 115), (170, 185, 255)), 
+                'lab': ((int(15*2.55), 26+127, -19+127), (int(100*2.55), 61+127, 5+127)),  # Convert L*2.55, A+127, B+127
+                'area_min': 100, 'area_max': 50000
+            },
+            'blue': {
+                'hsv': ((106, 70, 187), (129, 233, 255)),
+                'lab': ((int(43*2.55), 1+127, -65+127), (int(84*2.55), 27+127, -25+127)),  # Convert L*2.55, A+127, B+127
+                'area_min': 100, 'area_max': 50000
+            },
+
+            'purple': {
+                'hsv': ((132, 66, 19), (148, 255, 255)),
+                'lab': ((int(0*2.55), 25+127, -127+127), (int(100*2.55), 128+127, -19+127)),  # Convert L*2.55, A+127, B+127
+                'area_min': 100, 'area_max': 50000
+            },
+            'red': {
+                'hsv': ((170, 128, 109), (179, 255, 255)),
+                'lab': ((int(37*2.55), 58+127, 0), (int(100*2.55), 128+127, 128+127)),  # Convert L*2.55, A+127, B+127
+                'area_min': 100, 'area_max': 50000
+            },
+            'green': {
+                'hsv': ((43, 42, 50), (64, 201, 255)),
+                'lab': ((int(30*2.55), -127+127, 21+127), (int(100*2.55), -20+127, 60+127)),  # Convert L*2.55, A+127, B+127
+                'area_min': 100, 'area_max': 50000
+            },
+            'cyan': {
+                'hsv': ((90, 104, 246), (103, 181, 254)),
+                'lab': ((int(30*2.55), -99+127, -31+127), (int(95*2.55), -14+127, -13+127)),  # Convert L*2.55, A+127, B+127
+                'area_min': 100, 'area_max': 50000
+            },
+            'dark_green': {
+                'hsv': ((70, 125, 143), (88, 195, 255)),    
+                'lab': ((int(21*2.55), -58+127, 4+127), (int(85*2.55), -33+127, 19+127)),  # Convert L*2.55, A+127, B+127
+                'area_min': 100, 'area_max': 50000
+            },
+            'yellow': {
+                'hsv': ((19, 82, 179), (32, 255, 255)),
+                'lab': ((int(50*2.55), -69+127, 54+127), (int(100*2.55), 128+127, 128+127)),  # Convert L*2.55, A+127, B+127
+                'area_min': 100, 'area_max': 50000
+            },
+            'white': {
+                'hsv': ((10, 0, 180), (116, 19, 255)),
+                'lab': ((int(85*2.55), -3+127, -8+127), (int(100*2.55), 17+127, 12+127)),  # Convert L*2.55, A+127, B+127
+                'area_min': 100, 'area_max': 50000
+            },
+            'black': {
+                'hsv': ((0, 0, 59), (179, 60, 161)),
+                'lab': ((int(13*2.55), -1+127, -9+127), (int(45*2.55), 14+127, 6+127)),  # Convert L*2.55, A+127, B+127
+                'area_min': 100, 'area_max': 50000
+            },
+            
+            
+            
         }
         
         self.detected_sticks = {}  # Store detected stick counts
@@ -377,8 +423,8 @@ class ColorDetectionApp(QMainWindow):
         self.results_layout = QVBoxLayout()
         self.results_group.setLayout(self.results_layout)
         
-        # Total count display
-        self.total_count_label = QLabel("Total Sticks: 0")
+        # Total count display - emphasize color count
+        self.total_count_label = QLabel("Unique Colors: 0 | Total Sticks: 0")
         self.total_count_label.setStyleSheet("""
             QLabel { 
                 padding: 8px; 
@@ -392,7 +438,7 @@ class ColorDetectionApp(QMainWindow):
         """)
         
         # Individual color counts
-        self.color_counts_label = QLabel("Color Breakdown:\nNo sticks detected")
+        self.color_counts_label = QLabel("Color Breakdown:\nNo colors detected")
         self.color_counts_label.setStyleSheet("""
             QLabel { 
                 padding: 8px; 
@@ -692,9 +738,21 @@ class ColorDetectionApp(QMainWindow):
         # Capture frame-by-frame
         ret, self.image = self.cap.read()
         
-        # Apply bilateral filter for noise reduction while preserving edges
+        # Apply enhanced filtering pipeline for better detection
         if ret:
+            # 1. Gaussian blur for initial noise reduction
+            self.image = cv2.GaussianBlur(self.image, (5, 5), 0)
+            
+            # 2. Bilateral filter for noise reduction while preserving edges
             self.image = cv2.bilateralFilter(self.image, d=9, sigmaColor=75, sigmaSpace=75)
+            
+            # 3. CLAHE (Contrast Limited Adaptive Histogram Equalization) on LAB L-channel
+            lab_temp = cv2.cvtColor(self.image, cv2.COLOR_BGR2LAB)
+            l_temp, a_temp, b_temp = cv2.split(lab_temp)
+            clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
+            l_temp = clahe.apply(l_temp)
+            lab_temp = cv2.merge([l_temp, a_temp, b_temp])
+            self.image = cv2.cvtColor(lab_temp, cv2.COLOR_LAB2BGR)
         
         # Store the current frame for paused updates
         if ret:
@@ -733,8 +791,20 @@ class ColorDetectionApp(QMainWindow):
 
     def process_frame_with_sliders(self, frame):
         """Process a specific frame with current slider values"""
-        # Apply bilateral filter for noise reduction while preserving edges
+        # Apply enhanced filtering pipeline
+        # 1. Gaussian blur for initial noise reduction
+        frame = cv2.GaussianBlur(frame, (5, 5), 0)
+        
+        # 2. Bilateral filter for noise reduction while preserving edges
         frame = cv2.bilateralFilter(frame, d=9, sigmaColor=75, sigmaSpace=75)
+        
+        # 3. CLAHE on LAB L-channel
+        lab_temp = cv2.cvtColor(frame, cv2.COLOR_BGR2LAB)
+        l_temp, a_temp, b_temp = cv2.split(lab_temp)
+        clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
+        l_temp = clahe.apply(l_temp)
+        lab_temp = cv2.merge([l_temp, a_temp, b_temp])
+        frame = cv2.cvtColor(lab_temp, cv2.COLOR_LAB2BGR)
         
         # Perform hybrid stick detection
         mask, result, stick_counts = self.hybrid_stick_detection(frame)
@@ -845,10 +915,16 @@ class ColorDetectionApp(QMainWindow):
                     hsv_mask = cv2.inRange(hsv_image, hsv_lower, hsv_upper)
                     color_mask = cv2.bitwise_and(lab_mask, hsv_mask)
             
-            # Apply morphological operations to clean up the mask
-            kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
-            color_mask = cv2.morphologyEx(color_mask, cv2.MORPH_OPEN, kernel)
-            color_mask = cv2.morphologyEx(color_mask, cv2.MORPH_CLOSE, kernel)
+            # Apply enhanced morphological operations to clean up the mask
+            kernel_small = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
+            kernel_large = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
+            
+            # Remove small noise (like reflections)
+            color_mask = cv2.morphologyEx(color_mask, cv2.MORPH_OPEN, kernel_small, iterations=2)
+            # Fill small gaps
+            color_mask = cv2.morphologyEx(color_mask, cv2.MORPH_CLOSE, kernel_large, iterations=1)
+            # Final cleanup
+            color_mask = cv2.medianBlur(color_mask, 3)
             
             # Find and count sticks (contours) for this color
             contours, _ = cv2.findContours(color_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -876,21 +952,23 @@ class ColorDetectionApp(QMainWindow):
         return combined_mask, result_frame, stick_counts
 
     def update_stick_counts(self, stick_counts):
-        """Update the stick counting displays"""
-        total = sum(stick_counts.values())
-        self.total_sticks = total
+        """Update the stick counting displays - emphasizing color count"""
+        total_objects = sum(stick_counts.values())
+        unique_colors = sum(1 for count in stick_counts.values() if count > 0)
+        self.total_sticks = total_objects
+        self.unique_colors = unique_colors
         
-        # Update total count
-        self.total_count_label.setText(f"Total Sticks: {total}")
+        # Update total count - emphasize colors over objects
+        self.total_count_label.setText(f"Unique Colors: {unique_colors} | Total Sticks: {total_objects}")
         
         # Update color breakdown
-        if total > 0:
-            breakdown_text = "Color Breakdown:\n"
+        if unique_colors > 0:
+            breakdown_text = f"Color Breakdown ({unique_colors} colors detected):\n"
             for color, count in stick_counts.items():
                 if count > 0:
-                    breakdown_text += f"{color.capitalize()}: {count}\n"
+                    breakdown_text += f"{color.capitalize()}: {count} sticks\n"
         else:
-            breakdown_text = "Color Breakdown:\nNo sticks detected"
+            breakdown_text = "Color Breakdown:\nNo colors detected"
         
         self.color_counts_label.setText(breakdown_text.strip())
         
@@ -1014,14 +1092,16 @@ class ColorDetectionApp(QMainWindow):
         b_lower_actual = b_lower - 127
         b_upper_actual = b_upper - 127
         
-        # Get current stick counts
+        # Get current stick counts and unique colors
         total_sticks = self.total_sticks
+        unique_colors = getattr(self, 'unique_colors', 0)
         
         # Prepare comprehensive data
         all_limits = f"""
 ========================================
 DETECTION SESSION: {timestamp}
 Detection Method: {current_method}
+Unique Colors Detected: {unique_colors}
 Total Sticks Detected: {total_sticks}
 ========================================
 
@@ -1060,6 +1140,7 @@ DETECTION RESULTS:
         print(f"- HSV file: hsv_limits.txt")
         print(f"- LAB file: lab_limits.txt")
         print(f"Detection method: {current_method}")
+        print(f"Unique colors detected: {unique_colors}")
         print(f"Total sticks detected: {total_sticks}")
 
     def get_current_detection_summary(self):

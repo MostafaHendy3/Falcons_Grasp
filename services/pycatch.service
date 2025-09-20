@@ -1,0 +1,33 @@
+[Unit]
+Description=PyCatch Color Detection Service 2025
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+User=mostafa
+Group=mostafa
+WorkingDirectory=/home/mostafa/UXE/games_UXE_2025/game2/scripts_helper
+ExecStart=/usr/local/bin/python3 /home/mostafa/UXE/games_UXE_2025/game2/scripts_helper/pyCatch1_2025.py
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+# Environment variables for video processing
+Environment=DISPLAY=:0
+Environment=XDG_RUNTIME_DIR=/run/user/1000
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+
+# Resource limits
+MemoryMax=1G
+CPUQuota=60%
+
+# Networking access for MQTT
+PrivateNetwork=false
+
+[Install]
+WantedBy=multi-user.target

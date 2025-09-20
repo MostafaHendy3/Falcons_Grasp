@@ -55,7 +55,27 @@ class CalibratedColorDetector(QMainWindow):
         self.paused_frame = None
         # hsv values
 
+        # WHITEHSV LIMITS: WHITE
+        # HSV LIMITS:
+        # H Lower: 10, H Upper: 116
+        # S Lower: 0, S Upper: 19
+        # V Lower: 180, V Upper: 255
 
+        # LAB LIMITS:
+        # L Lower: 85, L Upper: 100
+        # A Lower: -3, A Upper: 17
+        # B Lower: -8, B Upper: 12
+
+        # black_hsv_limits: BLACK
+        #         HSV LIMITS:
+        # H Lower: 0, H Upper: 179
+        # S Lower: 0, S Upper: 60
+        # V Lower: 59, V Upper: 161
+
+        # LAB LIMITS:
+        # L Lower: 13, L Upper: 45
+        # A Lower: -1, A Upper: 14
+        # B Lower: -9, B Upper: 6
         # # Load calibrated color ranges from your exact data - CORRECTED VALUES
         self.calibrated_colors = {
             'pink': {
@@ -97,6 +117,16 @@ class CalibratedColorDetector(QMainWindow):
             'yellow': {
                 'hsv': ((19, 82, 179), (32, 255, 255)),
                 'lab': ((int(50*2.55), -69+127, 54+127), (int(100*2.55), 128+127, 128+127)),  # Convert L*2.55, A+127, B+127
+                'area_min': 100, 'area_max': 50000
+            },
+            'white': {
+                'hsv': ((10, 0, 180), (116, 19, 255)),
+                'lab': ((int(85*2.55), -3+127, -8+127), (int(100*2.55), 17+127, 12+127)),  # Convert L*2.55, A+127, B+127
+                'area_min': 100, 'area_max': 50000
+            },
+            'black': {
+                'hsv': ((0, 0, 59), (179, 60, 161)),
+                'lab': ((int(13*2.55), -1+127, -9+127), (int(45*2.55), 14+127, 6+127)),  # Convert L*2.55, A+127, B+127
                 'area_min': 100, 'area_max': 50000
             },
             
@@ -295,8 +325,8 @@ class CalibratedColorDetector(QMainWindow):
         self.results_layout = QVBoxLayout()
         self.results_group.setLayout(self.results_layout)
         
-        # Total count display
-        self.total_count_label = QLabel("Total Objects: 0")
+        # Total count display - emphasize color count
+        self.total_count_label = QLabel("Unique Colors: 0 | Total Objects: 0")
         self.total_count_label.setStyleSheet("""
             QLabel { 
                 padding: 10px; 
@@ -310,7 +340,7 @@ class CalibratedColorDetector(QMainWindow):
         """)
         
         # Individual color counts
-        self.color_counts_label = QLabel("Color Breakdown:\nNo objects detected")
+        self.color_counts_label = QLabel("Color Breakdown:\nNo colors detected")
         self.color_counts_label.setStyleSheet("""
             QLabel { 
                 padding: 10px; 
@@ -569,22 +599,24 @@ class CalibratedColorDetector(QMainWindow):
 
     def update_detection_display(self, detections):
         """Update the detection results display"""
-        total = sum(detections.values())
-        self.total_objects = total
+        total_objects = sum(detections.values())
+        unique_colors = sum(1 for count in detections.values() if count > 0)
+        self.total_objects = total_objects
         self.detected_objects = detections
+        self.unique_colors = unique_colors
         
-        # Update total count
-        self.total_count_label.setText(f"Total Objects: {total}")
+        # Update total count - emphasize colors over objects
+        self.total_count_label.setText(f"Unique Colors: {unique_colors} | Total Objects: {total_objects}")
         
         # Update color breakdown
-        if total > 0:
-            breakdown_text = "Color Breakdown:\n"
+        if unique_colors > 0:
+            breakdown_text = f"Color Breakdown ({unique_colors} colors detected):\n"
             for color, count in detections.items():
                 if count > 0:
                     color_display = color.replace('_', ' ').title()
-                    breakdown_text += f"{color_display}: {count}\n"
+                    breakdown_text += f"{color_display}: {count} objects\n"
         else:
-            breakdown_text = "Color Breakdown:\nNo objects detected"
+            breakdown_text = "Color Breakdown:\nNo colors detected"
         
         self.color_counts_label.setText(breakdown_text.strip())
 
@@ -835,6 +867,7 @@ class CalibratedColorDetector(QMainWindow):
         methods = ["LAB Only", "HSV Only", "Hybrid HSV+LAB"]
         current_method = methods[method_id]
         
+        unique_colors = getattr(self, 'unique_colors', 0)
         results_text = f"""
 ========================================
 COLOR DETECTION RESULTS
@@ -842,6 +875,7 @@ Timestamp: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
 Detection Method: {current_method}
 ========================================
 
+UNIQUE COLORS DETECTED: {unique_colors}
 TOTAL OBJECTS DETECTED: {self.total_objects}
 
 COLOR BREAKDOWN:
@@ -851,9 +885,9 @@ COLOR BREAKDOWN:
             for color, count in self.detected_objects.items():
                 if count > 0:
                     color_display = color.replace('_', ' ').title()
-                    results_text += f"{color_display}: {count}\n"
+                    results_text += f"{color_display}: {count} objects\n"
         else:
-            results_text += "No objects detected\n"
+            results_text += "No colors detected\n"
         
         results_text += "\n========================================\n"
         
